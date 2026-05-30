@@ -1128,8 +1128,9 @@ window.submitStory = async function() {
 
   const roomRef = doc(db, 'rooms', roomId);
   const turn = gameData.currentTurn;
+  const totalPlayers = gameData.players.length;
 
-  // Save story
+  // Save story and mark ready
   await updateDoc(roomRef, {
     [`stories.${myId}_${turn}`]: {
       text,
@@ -1141,17 +1142,16 @@ window.submitStory = async function() {
     readyForTurn: arrayUnion(myId)
   });
 
-  // Check if all ready
-  const snap = await getDoc(roomRef);
-  const d = snap.data();
-  const players = d.players || [];
-  const ready = d.readyForTurn || [];
-  if (ready.length >= players.length) {
-    // Move to answering phase — shift questions
-    await updateDoc(roomRef, { status: 'answering', readyForAnswers: [] });
-  }
-
-  btn.disabled = false;
+  // Wait a moment then check if all ready
+  setTimeout(async () => {
+    const snap = await getDoc(roomRef);
+    const d = snap.data();
+    const ready = d.readyForTurn || [];
+    if (ready.length >= totalPlayers && d.status === 'writing') {
+      await updateDoc(roomRef, { status: 'answering', readyForAnswers: [] });
+    }
+    btn.disabled = false;
+  }, 500);
 };
 
 // ——— ANSWER ———
@@ -1210,25 +1210,25 @@ window.submitAnswers = async function() {
     readyForAnswers: arrayUnion(myId)
   });
 
-  // Check if all answered
-  const snap = await getDoc(roomRef);
-  const d = snap.data();
-  const ready = d.readyForAnswers || [];
-  if (ready.length >= players.length) {
-    // Next turn or finish
-    if (d.currentTurn >= d.maxTurns) {
-      await updateDoc(roomRef, { status: 'finished' });
-    } else {
-      await updateDoc(roomRef, {
-        status: 'writing',
-        currentTurn: d.currentTurn + 1,
-        readyForTurn: [],
-        readyForAnswers: []
-      });
+  // Wait then check if all answered
+  setTimeout(async () => {
+    const snap = await getDoc(roomRef);
+    const d = snap.data();
+    const ready = d.readyForAnswers || [];
+    if (ready.length >= players.length && d.status === 'answering') {
+      if (d.currentTurn >= d.maxTurns) {
+        await updateDoc(roomRef, { status: 'finished' });
+      } else {
+        await updateDoc(roomRef, {
+          status: 'writing',
+          currentTurn: d.currentTurn + 1,
+          readyForTurn: [],
+          readyForAnswers: []
+        });
+      }
     }
-  }
-
-  btn.disabled = false;
+    btn.disabled = false;
+  }, 500);
 };
 
 // ——— FINAL ———
