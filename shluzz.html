@@ -6,1477 +6,614 @@
 <title>SHLÜZZ</title>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Raleway:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --card: #13131a;
-    --accent: #c8f55a;
-    --accent2: #ff6b6b;
-    --text: #f0f0f0;
-    --muted: #666;
-    --border: #2a2a35;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Raleway', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Background grain */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
-
-  .screen {
-    display: none;
-    min-height: 100vh;
-    padding: 24px 20px;
-    position: relative;
-    z-index: 1;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-  .screen.active { display: flex; flex-direction: column; }
-
-  /* LOGO */
-  .logo {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 42px;
-    font-weight: 900;
-    color: var(--accent);
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .logo-sub {
-    font-family: 'Raleway', sans-serif;
-    font-style: italic;
-    font-weight: 300;
-    color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 48px;
-  }
-
-  /* CARDS */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-
-  .card-title {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  /* INPUTS */
-  input, textarea, select {
-    width: 100%;
-    background: #1a1a24;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Raleway', sans-serif;
-    font-size: 16px;
-    padding: 14px 16px;
-    outline: none;
-    transition: border-color 0.2s;
-    resize: none;
-  }
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--accent);
-  }
-  input::placeholder, textarea::placeholder { color: var(--muted); }
-
-  textarea {
-    min-height: 180px;
-    line-height: 1.6;
-    font-size: 15px;
-  }
-
-  select option { background: #1a1a24; }
-
-  /* BUTTONS */
-  .btn {
-    width: 100%;
-    padding: 16px;
-    border-radius: 12px;
-    border: none;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 10px;
-  }
-  .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #0a0a0f;
-  }
-  .btn-primary:hover { background: #d4ff6a; }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-  .btn-danger {
-    background: transparent;
-    color: var(--accent2);
-    border: 1px solid var(--accent2);
-  }
-
-  .btn-small {
-    width: auto;
-    padding: 10px 16px;
-    font-size: 11px;
-    margin-bottom: 0;
-    border-radius: 8px;
-  }
-
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* PILL / TAG */
-  .pill {
-    display: inline-block;
-    background: #1a1a24;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 12px;
-    color: var(--muted);
-    margin: 4px 4px 4px 0;
-  }
-  .pill.active {
-    background: var(--accent);
-    color: #0a0a0f;
-    border-color: var(--accent);
-    font-weight: 700;
-  }
-
-  /* PLAYER LIST */
-  .player-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .player-item:last-child { border-bottom: none; }
-
-  .player-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #0a0a0f;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .player-name { font-weight: 400; font-size: 15px; }
-  .player-badge {
-    margin-left: auto;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 9px;
-    color: var(--accent);
-    letter-spacing: 1px;
-  }
-
-  /* ROOM CODE */
-  .room-code {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 36px;
-    font-weight: 900;
-    color: var(--accent);
-    letter-spacing: 8px;
-    text-align: center;
-    padding: 20px;
-  }
-
-  /* STATUS BAR */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .status-text {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  /* TURN INDICATOR */
-  .turn-badge {
-    background: var(--accent);
-    color: #0a0a0f;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 20px;
-    letter-spacing: 1px;
-    display: inline-block;
-    margin-bottom: 16px;
-  }
-
-  /* PROGRESS */
-  .progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .progress-bar {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-  .progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.4s ease;
-  }
-
-  /* SKIP WORD MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    z-index: 100;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px 20px 20px 20px;
-    padding: 24px;
-    width: 100%;
-    max-width: 480px;
-    animation: slideUp 0.3s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  .modal-title {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .modal-sub {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    font-style: italic;
-  }
-
-  /* STORY DISPLAY */
-  .story-text {
-    font-size: 15px;
-    line-height: 1.8;
-    color: var(--text);
-  }
-  .story-blank {
-    display: inline-block;
-    color: var(--accent);
-    font-weight: 700;
-    border-bottom: 2px solid var(--accent);
-    min-width: 80px;
-    text-align: center;
-    padding: 0 4px;
-  }
-
-  /* QUESTIONS LIST */
-  .question-item {
-    background: #1a1a24;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .question-label {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 10px;
-  }
-  .question-text {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: var(--accent);
-  }
-
-  /* CHAR COUNT */
-  .char-count {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: right;
-    margin-top: 6px;
-  }
-  .char-count.warn { color: var(--accent2); }
-
-  /* INLINE STORY BUILDER */
-  .story-builder {
-    position: relative;
-  }
-  .skip-btn-inline {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px dashed var(--accent);
-    background: transparent;
-    color: var(--accent);
-    font-family: 'Unbounded', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: all 0.2s;
-  }
-  .skip-btn-inline:hover { background: rgba(200,245,90,0.08); }
-
-  .skipped-words {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .skipped-tag {
-    background: rgba(200,245,90,0.1);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 12px;
-    font-style: italic;
-  }
-
-  /* FINAL STORIES */
-  .story-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .story-card-title {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-  }
-
-  /* WAITING */
-  .waiting-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 16px;
-  }
-  .waiting-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: var(--muted);
-  }
-  .waiting-item.done { color: var(--text); }
-  .waiting-icon { font-size: 16px; }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--accent);
-    color: #0a0a0f;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 12px 24px;
-    border-radius: 30px;
-    z-index: 999;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  /* DIVIDER */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 20px 0;
-  }
-
-  h2 {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  h3 {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 16px;
-  }
-  p { color: var(--muted); font-size: 14px; margin-bottom: 16px; line-height: 1.6; }
-
-  .spacer { flex: 1; }
-
-  .error-msg {
-    color: var(--accent2);
-    font-size: 13px;
-    margin-top: -8px;
-    margin-bottom: 12px;
-  }
-
-  .room-item {
-    background: #1a1a24;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .room-item:hover { border-color: var(--accent); }
-  .room-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-  .room-creator {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .room-players {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 11px;
-    color: var(--accent);
-  }
-  .room-meta {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .room-empty {
-    text-align: center;
-    padding: 24px 0;
-    color: var(--muted);
-    font-size: 13px;
-    font-style: italic;
-  }
-
-  /* MAX PLAYERS selector */
-  .players-selector {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  .players-opt {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'Unbounded', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.2s;
-  }
-  .players-opt.selected {
-    border-color: var(--accent);
-    background: rgba(200,245,90,0.08);
-    color: var(--accent);
-  }
-  .range-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-  }
-  input[type=range] {
-    flex: 1;
-    padding: 0;
-    height: 4px;
-    accent-color: var(--accent);
-    background: var(--border);
-    border: none;
-    border-radius: 2px;
-  }
-  .range-val {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--accent);
-    min-width: 32px;
-    text-align: center;
-  }
-
-  .topics-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  .topic-btn {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'Raleway', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.2s;
-  }
-  .topic-btn.selected {
-    border-color: var(--accent);
-    background: rgba(200,245,90,0.08);
-    color: var(--accent);
-  }
-
-  .name-input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .name-input-row input { flex: 1; margin-bottom: 0; }
+:root {
+  --bg: #0a0a0f;
+  --card: #13131a;
+  --accent: #c8f55a;
+  --accent2: #ff6b6b;
+  --text: #f0f0f0;
+  --muted: #666;
+  --border: #2a2a35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Raleway', sans-serif; min-height: 100vh; }
+.screen { display: none; min-height: 100vh; padding: 24px 20px; max-width: 480px; margin: 0 auto; flex-direction: column; }
+.screen.active { display: flex; }
+.logo { font-family: 'Unbounded', sans-serif; font-size: 38px; font-weight: 900; color: var(--accent); letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+.logo-sub { font-family: 'Raleway', sans-serif; font-style: italic; font-weight: 300; color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 36px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+.card-title { font-family: 'Unbounded', sans-serif; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+input, textarea, select { width: 100%; background: #1a1a24; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Raleway', sans-serif; font-size: 16px; padding: 13px 15px; outline: none; transition: border-color 0.2s; resize: none; }
+input:focus, textarea:focus { border-color: var(--accent); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { min-height: 160px; line-height: 1.6; font-size: 15px; }
+.btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: #0a0a0f; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt-btn { padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Raleway', sans-serif; font-size: 13px; cursor: pointer; text-align: left; transition: all 0.2s; }
+.opt-btn.sel { border-color: var(--accent); background: rgba(200,245,90,0.08); color: var(--accent); }
+.range-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+input[type=range] { flex: 1; padding: 0; height: 4px; accent-color: var(--accent); background: var(--border); border: none; border-radius: 2px; }
+.range-val { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); min-width: 32px; text-align: center; }
+.players-row { display: flex; gap: 8px; margin-top: 8px; }
+.players-opt { flex: 1; padding: 13px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; }
+.players-opt.sel { border-color: var(--accent); background: rgba(200,245,90,0.08); color: var(--accent); }
+.room-item { background: #1a1a24; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s; }
+.room-item:active { border-color: var(--accent); }
+.room-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.room-creator { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; }
+.room-players { font-family: 'Unbounded', sans-serif; font-size: 11px; color: var(--accent); }
+.room-meta { font-size: 12px; color: var(--muted); }
+.room-empty { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; font-style: italic; }
+.player-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.player-item:last-child { border-bottom: none; }
+.player-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #0a0a0f; font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.player-badge { margin-left: auto; font-family: 'Unbounded', sans-serif; font-size: 9px; color: var(--accent); letter-spacing: 1px; }
+.status-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-text { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
+.char-count { font-size: 12px; color: var(--muted); text-align: right; margin-top: 5px; }
+.char-count.warn { color: var(--accent2); }
+.skip-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed var(--accent); background: transparent; color: var(--accent); font-family: 'Unbounded', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; margin-top: 10px; }
+.skipped-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.skipped-tag { background: rgba(200,245,90,0.1); border: 1px solid var(--accent); color: var(--accent); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-style: italic; }
+.q-item { background: #1a1a24; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.q-label { font-family: 'Unbounded', sans-serif; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.q-text { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+.waiting-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); padding: 6px 0; }
+.waiting-item.done { color: var(--text); }
+.story-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+.story-card-title { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 2px; margin-bottom: 14px; }
+.story-text { font-size: 15px; line-height: 1.8; }
+.story-blank { display: inline-block; color: var(--accent); font-weight: 700; border-bottom: 2px solid var(--accent); min-width: 60px; text-align: center; padding: 0 4px; }
+.turn-label { font-size: 10px; color: var(--muted); font-family: 'Unbounded', sans-serif; letter-spacing: 1px; margin-bottom: 8px; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: flex-end; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; width: 100%; max-width: 480px; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-title { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; font-style: italic; }
+.modal-btns { display: flex; gap: 10px; margin-top: 14px; }
+.modal-btns .btn { margin-bottom: 0; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent); color: #0a0a0f; font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; padding: 11px 22px; border-radius: 30px; z-index: 999; transition: transform 0.3s; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.error-msg { color: var(--accent2); font-size: 13px; margin-top: 6px; min-height: 20px; }
+h2 { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.6; }
+.spacer { flex: 1; }
+.hint { font-size: 11px; color: var(--accent); font-family: 'Unbounded', sans-serif; letter-spacing: 1px; }
 </style>
 </head>
 <body>
 
-<!-- SCREEN: Home -->
-<div class="screen active" id="screen-home">
+<!-- HOME -->
+<div class="screen active" id="s-home">
   <div class="logo">SHLÜZZ</div>
   <div class="logo-sub">игра слов и воображения</div>
-
   <div class="card">
     <div class="card-title">Твоё имя</div>
-    <input type="text" id="player-name-input" placeholder="Введи своё имя" maxlength="20" oninput="onNameInput()">
+    <input id="inp-name" type="text" placeholder="Введи своё имя" maxlength="20" oninput="onNameChange()">
+    <div class="error-msg" id="home-err"></div>
   </div>
-
-  <button class="btn btn-primary" onclick="goCreate()" id="btn-create" disabled>✦ Создать шлюз</button>
-  <div id="home-error" class="error-msg"></div>
-
-  <div class="card" id="rooms-card">
+  <button class="btn btn-primary" id="btn-create" onclick="goSetup()" disabled>✦ Создать шлюз</button>
+  <div class="card">
     <div class="card-title">Открытые шлюзы</div>
-    <div id="rooms-list">
-      <p style="text-align:center;padding:16px 0;">Загрузка…</p>
-    </div>
+    <div id="rooms-list"><div class="room-empty">Загрузка…</div></div>
   </div>
-
   <div class="spacer"></div>
-  <p style="text-align:center; font-size:12px;">2–4 игрока · онлайн</p>
+  <p style="text-align:center;font-size:12px;color:var(--muted)">2–4 игрока · онлайн</p>
 </div>
 
-<!-- SCREEN: Setup (creator) -->
-<div class="screen" id="screen-setup">
+<!-- SETUP -->
+<div class="screen" id="s-setup">
   <div class="logo">SHLÜZZ</div>
   <h2>Настройка шлюза</h2>
-  <p>Ты создаёшь комнату. Выбери тему, персонажа и количество ходов.</p>
-
+  <p class="sub">Выбери тему, персонажа и количество ходов.</p>
   <div class="card">
     <div class="card-title">Тема игры</div>
-    <div class="topics-grid" id="topics-grid"></div>
-    <div id="custom-topic-row" style="display:none;margin-top:10px;">
-      <input type="text" id="custom-topic-input" placeholder="Напиши свою тему…" maxlength="50">
+    <div class="grid2" id="topics-grid"></div>
+    <div id="custom-topic-wrap" style="display:none;margin-top:10px">
+      <input id="inp-custom-topic" type="text" placeholder="Напиши свою тему…" maxlength="50">
     </div>
   </div>
-
   <div class="card">
-    <div class="card-title">Персонаж истории <span style="color:var(--muted);font-size:10px;font-family:Raleway">(необязательно)</span></div>
-    <div class="topics-grid" id="characters-grid"></div>
-    <div id="custom-character-row" style="display:none;margin-top:10px;">
-      <input type="text" id="custom-character-input" placeholder="Напиши своего персонажа…" maxlength="50">
+    <div class="card-title">Персонаж <span style="color:var(--muted);font-size:10px;font-family:Raleway">(необязательно)</span></div>
+    <div class="grid2" id="chars-grid"></div>
+    <div id="custom-char-wrap" style="display:none;margin-top:10px">
+      <input id="inp-custom-char" type="text" placeholder="Напиши своего персонажа…" maxlength="50">
     </div>
   </div>
-
   <div class="card">
     <div class="card-title">Количество игроков</div>
-    <div class="players-selector" id="players-selector">
-      <button class="players-opt selected" onclick="selectMaxPlayers(2)">2</button>
-      <button class="players-opt" onclick="selectMaxPlayers(3)">3</button>
-      <button class="players-opt" onclick="selectMaxPlayers(4)">4</button>
+    <div class="players-row">
+      <button class="players-opt sel" onclick="setMaxPlayers(2,this)">2</button>
+      <button class="players-opt" onclick="setMaxPlayers(3,this)">3</button>
+      <button class="players-opt" onclick="setMaxPlayers(4,this)">4</button>
     </div>
   </div>
-
   <div class="card">
+    <div class="card-title">Количество ходов</div>
     <div class="range-row">
-      <span style="font-size:12px;color:var(--muted)">3</span>
-      <input type="range" id="turns-range" min="3" max="15" value="5" oninput="document.getElementById('turns-val').textContent=this.value">
-      <span style="font-size:12px;color:var(--muted)">15</span>
+      <span style="font-size:11px;color:var(--muted)">3</span>
+      <input type="range" id="inp-turns" min="3" max="15" value="5" oninput="document.getElementById('turns-val').textContent=this.value">
+      <span style="font-size:11px;color:var(--muted)">15</span>
       <div class="range-val" id="turns-val">5</div>
     </div>
   </div>
-
   <button class="btn btn-primary" onclick="createRoom()">Создать шлюз →</button>
-  <button class="btn btn-secondary" onclick="showScreen('screen-home')">← Назад</button>
+  <button class="btn btn-secondary" onclick="goHome()">← Назад</button>
 </div>
 
-<!-- SCREEN: Lobby -->
-<div class="screen" id="screen-lobby">
+<!-- LOBBY -->
+<div class="screen" id="s-lobby">
   <div class="logo">SHLÜZZ</div>
-
   <div class="card">
-    <div class="card-title">Игроки</div>
+    <div class="card-title">Игроки в шлюзе</div>
     <div id="lobby-players"></div>
   </div>
-
-  <div id="lobby-start-btn" style="display:none">
-    <button class="btn btn-primary" onclick="startGame()">Начать игру ✦</button>
-  </div>
-
-  <p id="lobby-waiting-msg" style="text-align:center;font-size:13px;">Жди пока все подключатся…</p>
+  <p id="lobby-status" style="text-align:center;font-size:13px;color:var(--muted)">Ждём игроков…</p>
 </div>
 
-<!-- SCREEN: Write story -->
-<div class="screen" id="screen-write">
+<!-- WRITE -->
+<div class="screen" id="s-write">
   <div class="status-bar">
     <div class="status-dot"></div>
-    <div class="status-text" id="write-status">Ход 1</div>
+    <div class="status-text" id="write-status-text">Ход 1 из 5</div>
+    <div class="spacer"></div>
+    <div class="hint" id="write-hint"></div>
   </div>
-
-  <div class="progress-label">
-    <span id="write-progress-text">Ход 1 из 5</span>
-    <span id="write-topic-label" style="color:var(--accent);font-size:11px;"></span>
-  </div>
-  <div class="progress-bar">
-    <div class="progress-fill" id="write-progress-fill" style="width:20%"></div>
-  </div>
-
+  <div class="progress-bar"><div class="progress-fill" id="write-progress" style="width:20%"></div></div>
   <h2>Пиши историю</h2>
-  <p>Придумай историю, пропуская некоторые слова. Нажми кнопку ниже чтобы вставить пропуск.</p>
-
-  <div class="card story-builder">
-    <textarea id="story-textarea" placeholder="Однажды…" maxlength="500" oninput="updateCharCount()"></textarea>
+  <p class="sub">Придумай историю с пропусками. Нажми кнопку чтобы вставить пропуск.</p>
+  <div class="card">
+    <textarea id="inp-story" placeholder="Однажды…" maxlength="500" oninput="onStoryInput()"></textarea>
     <div class="char-count" id="char-count">0 / 500</div>
-    <div class="skipped-words" id="skipped-words-display"></div>
-    <button class="skip-btn-inline" onclick="openSkipModal()">+ пропустить слово</button>
+    <div class="skipped-tags" id="skipped-tags"></div>
+    <button class="skip-btn" onclick="openSkipModal()">+ пропустить слово</button>
   </div>
-
-  <button class="btn btn-primary" onclick="submitStory()" id="story-submit-btn">Готово →</button>
-  <button class="btn btn-danger" onclick="confirmFinishEarly()" id="finish-early-btn" style="display:none">Завершить игру раньше</button>
+  <button class="btn btn-primary" id="btn-story-done" onclick="submitStory()">Готово →</button>
+  <button class="btn btn-danger" id="btn-finish-early" style="display:none" onclick="finishEarly()">Завершить игру раньше</button>
 </div>
 
-<!-- SCREEN: Waiting -->
-<div class="screen" id="screen-waiting">
-  <div class="status-bar">
-    <div class="status-dot"></div>
-    <div class="status-text">Ожидание</div>
-  </div>
+<!-- WAIT STORIES -->
+<div class="screen" id="s-wait-stories">
+  <div class="status-bar"><div class="status-dot"></div><div class="status-text">Ожидание</div></div>
   <h2>Ждём остальных…</h2>
-  <p>Все пишут свои истории. Скоро придут вопросы!</p>
-  <div class="waiting-list" id="waiting-list"></div>
+  <p class="sub">Все пишут истории. Скоро придут вопросы!</p>
+  <div id="wait-stories-list"></div>
 </div>
 
-<!-- SCREEN: Answer questions -->
-<div class="screen" id="screen-answer">
+<!-- ANSWER -->
+<div class="screen" id="s-answer">
   <div class="status-bar">
     <div class="status-dot"></div>
-    <div class="status-text" id="answer-status">Ход 1</div>
+    <div class="status-text" id="answer-status-text">Ход 1 из 5</div>
   </div>
-
   <h2>Отвечай на вопросы</h2>
-  <p>Отвечай смешно и необычно — ты не знаешь чью историю заполняешь!</p>
-
+  <p class="sub">Отвечай смешно и необычно — ты не знаешь чью историю заполняешь!</p>
   <div id="questions-list"></div>
-
-  <button class="btn btn-primary" onclick="submitAnswers()" id="answers-submit-btn">Готово →</button>
+  <button class="btn btn-primary" id="btn-answers-done" onclick="submitAnswers()">Готово →</button>
 </div>
 
-<!-- SCREEN: Waiting for answers -->
-<div class="screen" id="screen-waiting-answers">
-  <div class="status-bar">
-    <div class="status-dot"></div>
-    <div class="status-text">Ожидание</div>
-  </div>
+<!-- WAIT ANSWERS -->
+<div class="screen" id="s-wait-answers">
+  <div class="status-bar"><div class="status-dot"></div><div class="status-text">Ожидание</div></div>
   <h2>Ждём остальных…</h2>
-  <p>Все отвечают на вопросы. Скоро следующий ход!</p>
-  <div class="waiting-list" id="waiting-answers-list"></div>
+  <p class="sub">Все отвечают на вопросы.</p>
+  <div id="wait-answers-list"></div>
 </div>
 
-<!-- SCREEN: Final -->
-<div class="screen" id="screen-final">
+<!-- FINAL -->
+<div class="screen" id="s-final">
   <div class="logo">SHLÜZZ</div>
   <h2>Истории готовы! 🎉</h2>
-  <p>Читайте что получилось — и смейтесь!</p>
+  <p class="sub">Читайте что получилось — смейтесь!</p>
   <div id="final-stories"></div>
   <button class="btn btn-primary" onclick="downloadStories()">Скачать истории</button>
-  <button class="btn btn-secondary" onclick="resetAndGoHome()">Играть снова</button>
+  <button class="btn btn-secondary" onclick="goHome()">Играть снова</button>
 </div>
 
-<!-- SKIP WORD MODAL -->
-<div class="modal-overlay" id="skip-modal">
+<!-- MODAL: Skip word -->
+<div class="modal-overlay" id="modal-skip">
   <div class="modal">
     <div class="modal-title">Пропуск слова</div>
     <div class="modal-sub">Напиши вопрос к пропущенному слову</div>
-    <input type="text" id="skip-question-input" placeholder='например: "что?", "какой?", "что делал?"' maxlength="60">
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="btn btn-secondary btn-small" style="flex:1" onclick="closeSkipModal()">Отмена</button>
-      <button class="btn btn-primary btn-small" style="flex:1" onclick="confirmSkip()">Ок →</button>
+    <input id="inp-skip-q" type="text" placeholder='например: "что?", "какой?", "кто?"' maxlength="60">
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeSkipModal()">Отмена</button>
+      <button class="btn btn-primary" onclick="confirmSkip()">Ок →</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ——— FIREBASE CONFIG ———
 const firebaseConfig = {
   apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
   authDomain: "shluzz-a4e22.firebaseapp.com",
   projectId: "shluzz-a4e22",
   storageBucket: "shluzz-a4e22.firebasestorage.app",
   messagingSenderId: "1006492767485",
-  appId: "1:1006492767485:web:68a2eb538a274f5a74ba76",
-  measurementId: "G-5LQNWQEN8Z"
+  appId: "1:1006492767485:web:68a2eb538a274f5a74ba76"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ——— GAME STATE ———
-let myName = '';
-let myId = '';
-let roomId = '';
-let isCreator = false;
+// ═══ STATE ═══
+let myName = '', myId = '', roomId = '';
 let gameData = null;
-let unsubscribe = null;
-let unsubscribeRooms = null;
-let skippedWords = [];
-let currentStoryText = '';
+let skips = []; // [{question}]
 let maxPlayers = 2;
+let selectedTopic = null;
+let selectedChar = null;
+let unsubRoom = null, unsubRooms = null;
 
-const TOPICS = [
-  '🌙 Магический лес', '🚀 Космос', '🏙️ Большой город',
-  '🐉 Драконы и маги', '🕵️ Детектив', '🎪 Цирк',
-  '🍕 Кулинария', '⏰ Машина времени', '🏝️ Необитаемый остров',
-  '👻 Мистика и ужасы', '💼 Офисные будни', '🎬 Голливуд'
-];
+const TOPICS = ['🚫 Без темы','🌙 Магический лес','🚀 Космос','🏙️ Большой город','🐉 Драконы и маги','🕵️ Детектив','🎪 Цирк','🍕 Кулинария','⏰ Машина времени','🏝️ Необитаемый остров','👻 Мистика','🏢 Офис','🎬 Голливуд','✏️ Своя тема'];
+const CHARS = ['🚫 Без персонажа','🧙 Волшебник','🕵️ Детектив','👩‍🚀 Космонавт','🤡 Клоун','👑 Король','🧟 Зомби','🦸 Супергерой','🧛 Вампир','👩‍🍳 Повар','🤖 Робот','✏️ Свой персонаж'];
 
-const CHARACTERS = [
-  '🧙 Волшебник', '🕵️ Детектив', '👩‍🚀 Космонавт',
-  '🤡 Клоун', '👑 Король', '🧟 Зомби',
-  '🦸 Супергерой', '🧛 Вампир', '👩‍🍳 Повар', '🤖 Робот'
-];
+// ═══ UTILS ═══
+function uid() { return Math.random().toString(36).slice(2,10); }
+function roomCode() { return Math.random().toString(36).slice(2,7).toUpperCase(); }
+function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-let selectedTopic = null; // null = без темы
-let selectedCharacter = null; // null = без персонажа
-let customTopic = '';
-let customCharacter = '';
-
-// ——— UTILS ———
-function genId(len = 6) {
-  return Math.random().toString(36).substring(2, 2 + len).toUpperCase();
-}
-function genPlayerId() {
-  return Math.random().toString(36).substring(2, 10);
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
-}
-
-function showToast(msg, dur = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
-}
-
-// ——— HOME ———
-window.onNameInput = function() {
-  const name = document.getElementById('player-name-input').value.trim();
-  document.getElementById('btn-create').disabled = !name;
+// ═══ HOME ═══
+window.onNameChange = () => {
+  document.getElementById('btn-create').disabled = !document.getElementById('inp-name').value.trim();
+  document.getElementById('home-err').textContent = '';
 };
 
-window.selectMaxPlayers = function(n) {
-  maxPlayers = n;
-  document.querySelectorAll('.players-opt').forEach((btn, i) => {
-    btn.classList.toggle('selected', i + 2 === n);
-  });
-};
-
-function subscribeRooms() {
-  if (unsubscribeRooms) unsubscribeRooms();
-  const q = query(collection(db, 'rooms'), where('status', '==', 'lobby'));
-  unsubscribeRooms = onSnapshot(q, (snapshot) => {
+function startRoomsListener() {
+  if (unsubRooms) unsubRooms();
+  const q = query(collection(db,'rooms'), where('status','==','lobby'));
+  unsubRooms = onSnapshot(q, snap => {
     const rooms = [];
-    const now = Date.now();
-    snapshot.forEach(d => {
-      const data = d.data();
-      const createdAt = data.createdAt?.toMillis?.() || now;
-      // Only delete if older than 2 hours AND createdAt is set
-      if (data.createdAt && now - createdAt > 2 * 60 * 60 * 1000) {
-        updateDoc(doc(db, 'rooms', d.id), { status: 'expired' });
-      } else {
-        rooms.push({ id: d.id, ...data });
-      }
-    });
-    renderRoomsList(rooms);
+    snap.forEach(d => rooms.push({id:d.id,...d.data()}));
+    renderRooms(rooms);
   });
 }
 
-function renderRoomsList(rooms) {
+function renderRooms(rooms) {
   const el = document.getElementById('rooms-list');
-  if (!rooms.length) {
-    el.innerHTML = '<div class="room-empty">Нет открытых шлюзов.<br>Создай свой!</div>';
-    return;
-  }
+  if (!rooms.length) { el.innerHTML='<div class="room-empty">Нет открытых шлюзов.<br>Создай свой!</div>'; return; }
   el.innerHTML = rooms.map(r => {
-    const current = r.players?.length || 0;
-    const max = r.maxPlayers || 2;
-    const meta = [r.topic !== '🚫 Без темы' ? r.topic : null, r.character].filter(Boolean).join(' · ') || 'Без темы';
-    return `
-      <div class="room-item" onclick="joinRoomFromList('${r.id}')">
-        <div class="room-item-header">
-          <div class="room-creator">${r.players?.[0]?.name || '?'}</div>
-          <div class="room-players">${current}/${max} игроков</div>
-        </div>
-        <div class="room-meta">${meta} · ${r.maxTurns} ходов</div>
-      </div>`;
+    const cur = r.players?.length||0, max = r.maxPlayers||2;
+    const topic = r.topic && r.topic!=='🚫 Без темы' ? r.topic : '';
+    const char = r.character || '';
+    const meta = [topic,char].filter(Boolean).join(' · ') || 'Без темы';
+    return `<div class="room-item" onclick="joinRoom('${r.id}')">
+      <div class="room-item-header">
+        <div class="room-creator">${r.players?.[0]?.name||'?'}</div>
+        <div class="room-players">${cur}/${max} игроков</div>
+      </div>
+      <div class="room-meta">${meta} · ${r.maxTurns} ходов</div>
+    </div>`;
   }).join('');
 }
 
-window.joinRoomFromList = async function(rid) {
-  const name = document.getElementById('player-name-input').value.trim();
-  if (!name) { document.getElementById('home-error').textContent = 'Сначала введи имя!'; return; }
-  myName = name;
-  myId = genPlayerId();
-  roomId = rid;
-  isCreator = false;
-
-  const roomRef = doc(db, 'rooms', roomId);
-  const snap = await getDoc(roomRef);
-  if (!snap.exists()) { document.getElementById('home-error').textContent = 'Шлюз не найден'; return; }
-
-  const data = snap.data();
-  if (data.status !== 'lobby') { document.getElementById('home-error').textContent = 'Игра уже началась'; return; }
-  if (data.players?.length >= (data.maxPlayers || 2)) { document.getElementById('home-error').textContent = 'Шлюз заполнен'; return; }
-
-  await updateDoc(roomRef, { players: arrayUnion({ id: myId, name: myName }) });
-  document.getElementById('lobby-code').textContent = roomId;
-  subscribeRoom();
-  showScreen('screen-lobby');
+window.goSetup = () => {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { document.getElementById('home-err').textContent='Введи имя!'; return; }
+  myName = name; myId = uid();
+  buildTopics(); buildChars();
+  show('s-setup');
 };
 
-window.goCreate = function() {
-  const name = document.getElementById('player-name-input').value.trim();
-  if (!name) { document.getElementById('home-error').textContent = 'Введи своё имя!'; return; }
-  myName = name;
-  myId = genPlayerId();
-  isCreator = true;
-  selectedTopic = 'none';
-  selectedCharacter = 'none';
-  buildTopicsGrid();
-  buildCharactersGrid();
-  showScreen('screen-setup');
+window.goHome = () => {
+  if (unsubRoom) { unsubRoom(); unsubRoom=null; }
+  myId=''; roomId=''; gameData=null; skips=[];
+  selectedTopic=null; selectedChar=null; maxPlayers=2;
+  show('s-home');
 };
 
-window.joinRoom = async function() {
-  const name = document.getElementById('player-name-input').value.trim();
-  const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-  if (!name) { document.getElementById('home-error').textContent = 'Введи своё имя!'; return; }
-  if (code.length < 4) { document.getElementById('home-error').textContent = 'Введи код комнаты'; return; }
-  myName = name;
-  myId = genPlayerId();
-  roomId = code;
-  isCreator = false;
+// ═══ JOIN ROOM ═══
+window.joinRoom = async (rid) => {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { document.getElementById('home-err').textContent='Сначала введи имя!'; return; }
+  myName = name; myId = uid(); roomId = rid;
 
-  const roomRef = doc(db, 'rooms', roomId);
-  const snap = await getDoc(roomRef);
-  if (!snap.exists()) { document.getElementById('home-error').textContent = 'Комната не найдена'; return; }
+  const snap = await getDoc(doc(db,'rooms',rid));
+  if (!snap.exists()) { document.getElementById('home-err').textContent='Шлюз не найден'; return; }
+  const d = snap.data();
+  if (d.status !== 'lobby') { document.getElementById('home-err').textContent='Игра уже началась'; return; }
+  if ((d.players?.length||0) >= (d.maxPlayers||2)) { document.getElementById('home-err').textContent='Шлюз заполнен'; return; }
 
-  const data = snap.data();
-  if (data.players && data.players.length >= 4) { document.getElementById('home-error').textContent = 'Комната заполнена'; return; }
-  if (data.status !== 'lobby') { document.getElementById('home-error').textContent = 'Игра уже началась'; return; }
-
-  // Check if player with same name already exists
-  const existingPlayer = data.players?.find(p => p.name.toLowerCase() === name.toLowerCase());
-  if (existingPlayer) {
-    // Reuse existing player id
-    myId = existingPlayer.id;
-  } else {
-    await updateDoc(roomRef, {
-      players: arrayUnion({ id: myId, name: myName })
-    });
-  }
-
-  document.getElementById('lobby-code').textContent = roomId;
-  subscribeRoom();
-  showScreen('screen-lobby');
+  await updateDoc(doc(db,'rooms',rid), { players: arrayUnion({id:myId,name:myName}) });
+  startRoomListener();
+  show('s-lobby');
 };
 
-// ——— SETUP ———
-function buildTopicsGrid() {
-  const grid = document.getElementById('topics-grid');
-  grid.innerHTML = '';
-
-  // No topic option
-  const noBtn = document.createElement('button');
-  noBtn.className = 'topic-btn' + (selectedTopic === 'none' ? ' selected' : '');
-  noBtn.textContent = '🚫 Без темы';
-  noBtn.onclick = () => {
-    selectedTopic = 'none';
-    document.getElementById('custom-topic-row').style.display = 'none';
-    buildTopicsGrid();
-  };
-  grid.appendChild(noBtn);
-
-  TOPICS.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className = 'topic-btn' + (t === selectedTopic ? ' selected' : '');
-    btn.textContent = t;
-    btn.onclick = () => {
-      selectedTopic = t;
-      document.getElementById('custom-topic-row').style.display = 'none';
-      buildTopicsGrid();
-    };
-    grid.appendChild(btn);
-  });
-
-  // Custom topic option
-  const customBtn = document.createElement('button');
-  customBtn.className = 'topic-btn' + (selectedTopic === 'custom' ? ' selected' : '');
-  customBtn.textContent = '✏️ Своя тема';
-  customBtn.onclick = () => {
-    selectedTopic = 'custom';
-    document.getElementById('custom-topic-row').style.display = 'block';
-    buildTopicsGrid();
-  };
-  grid.appendChild(customBtn);
+// ═══ SETUP ═══
+function buildTopics() {
+  document.getElementById('topics-grid').innerHTML = TOPICS.map(t =>
+    `<button class="opt-btn${t===selectedTopic?' sel':''}" onclick="selTopic('${t}')">${t}</button>`
+  ).join('');
+  document.getElementById('custom-topic-wrap').style.display = selectedTopic==='✏️ Своя тема' ? 'block':'none';
 }
-
-function buildCharactersGrid() {
-  const grid = document.getElementById('characters-grid');
-  grid.innerHTML = '';
-
-  // No character option
-  const noBtn = document.createElement('button');
-  noBtn.className = 'topic-btn' + (selectedCharacter === 'none' ? ' selected' : '');
-  noBtn.textContent = '🚫 Без персонажа';
-  noBtn.onclick = () => {
-    selectedCharacter = 'none';
-    document.getElementById('custom-character-row').style.display = 'none';
-    buildCharactersGrid();
-  };
-  grid.appendChild(noBtn);
-
-  CHARACTERS.forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'topic-btn' + (c === selectedCharacter ? ' selected' : '');
-    btn.textContent = c;
-    btn.onclick = () => {
-      selectedCharacter = c;
-      document.getElementById('custom-character-row').style.display = 'none';
-      buildCharactersGrid();
-    };
-    grid.appendChild(btn);
-  });
-
-  // Custom character option
-  const customBtn = document.createElement('button');
-  customBtn.className = 'topic-btn' + (selectedCharacter === 'custom' ? ' selected' : '');
-  customBtn.textContent = '✏️ Свой персонаж';
-  customBtn.onclick = () => {
-    selectedCharacter = 'custom';
-    document.getElementById('custom-character-row').style.display = 'block';
-    buildCharactersGrid();
-  };
-  grid.appendChild(customBtn);
+function buildChars() {
+  document.getElementById('chars-grid').innerHTML = CHARS.map(c =>
+    `<button class="opt-btn${c===selectedChar?' sel':''}" onclick="selChar('${c}')">${c}</button>`
+  ).join('');
+  document.getElementById('custom-char-wrap').style.display = selectedChar==='✏️ Свой персонаж' ? 'block':'none';
 }
+window.selTopic = t => { selectedTopic=t; buildTopics(); };
+window.selChar = c => { selectedChar=c; buildChars(); };
+window.setMaxPlayers = (n, el) => {
+  maxPlayers=n;
+  document.querySelectorAll('.players-opt').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+};
 
-window.createRoom = async function() {
-  if (!myName || !myId) {
-    showToast('Ошибка — вернись на главный экран');
-    showScreen('screen-home');
-    return;
-  }
+window.createRoom = async () => {
+  const turns = parseInt(document.getElementById('inp-turns').value);
+  let topic = (!selectedTopic||selectedTopic==='🚫 Без темы') ? null :
+              selectedTopic==='✏️ Своя тема' ? (document.getElementById('inp-custom-topic').value.trim()||'Своя тема') :
+              selectedTopic;
+  let char = (!selectedChar||selectedChar==='🚫 Без персонажа') ? null :
+             selectedChar==='✏️ Свой персонаж' ? (document.getElementById('inp-custom-char').value.trim()||null) :
+             selectedChar;
 
-  roomId = genId(5);
-  const roomRef = doc(db, 'rooms', roomId);
-
-  const turns = parseInt(document.getElementById('turns-range').value);
-
-  let finalTopic = (!selectedTopic || selectedTopic === 'none') ? '🚫 Без темы' :
-                   selectedTopic === 'custom' ? (document.getElementById('custom-topic-input').value.trim() || 'Своя тема') :
-                   selectedTopic;
-
-  let finalCharacter = (!selectedCharacter || selectedCharacter === 'none') ? null :
-                       selectedCharacter === 'custom' ? (document.getElementById('custom-character-input').value.trim() || null) :
-                       selectedCharacter;
-
-  await setDoc(roomRef, {
+  roomId = roomCode();
+  await setDoc(doc(db,'rooms',roomId), {
     status: 'lobby',
-    topic: finalTopic,
-    character: finalCharacter,
+    topic: topic||null,
+    character: char||null,
     maxTurns: turns,
     maxPlayers: maxPlayers,
     currentTurn: 0,
-    players: [{ id: myId, name: myName }],
+    players: [{id:myId,name:myName}],
     stories: {},
     answers: {},
     readyForTurn: [],
     readyForAnswers: [],
     createdAt: serverTimestamp()
   });
-
-  subscribeRoom();
-  showScreen('screen-lobby');
+  startRoomListener();
+  show('s-lobby');
 };
 
-// ——— LOBBY ———
-window.copyCode = function() {
-  navigator.clipboard.writeText(roomId).catch(() => {});
-  showToast('Код скопирован! ' + roomId);
-};
-
-window.startGame = async function() {
-  const roomRef = doc(db, 'rooms', roomId);
-  await updateDoc(roomRef, { status: 'writing', currentTurn: 1, readyForTurn: [] });
-};
-
-// ——— SUBSCRIBE ———
-function subscribeRoom() {
-  if (unsubscribe) unsubscribe();
-  const roomRef = doc(db, 'rooms', roomId);
-  unsubscribe = onSnapshot(roomRef, (snap) => {
+// ═══ ROOM LISTENER ═══
+function startRoomListener() {
+  if (unsubRoom) unsubRoom();
+  unsubRoom = onSnapshot(doc(db,'rooms',roomId), snap => {
     if (!snap.exists()) return;
     gameData = snap.data();
-    handleGameState(gameData);
+    handleState(gameData);
   });
 }
 
-function handleGameState(data) {
-  const players = data.players || [];
+function handleState(d) {
+  const players = d.players||[];
 
-  // LOBBY
-  if (data.status === 'lobby') {
-    renderLobbyPlayers(players);
-    const max = data.maxPlayers || 2;
-    const isFull = players.length >= max;
-    // Autostart when full - first player triggers it
-    if (isFull && players[0]?.id === myId) {
-      const roomRef = doc(db, 'rooms', roomId);
-      updateDoc(roomRef, { status: 'writing', currentTurn: 1, readyForTurn: [] });
-      return;
+  if (d.status==='lobby') {
+    renderLobby(players, d.maxPlayers||2);
+    // Autostart: first player triggers when full
+    if (players.length >= (d.maxPlayers||2) && players[0]?.id===myId) {
+      updateDoc(doc(db,'rooms',roomId), {status:'writing', currentTurn:1, readyForTurn:[]});
     }
-    document.getElementById('lobby-start-btn').style.display = 'none';
-    document.getElementById('lobby-waiting-msg').textContent = isFull ? 'Запускаем игру…' : `Ждём игроков… ${players.length}/${max}`;
-    document.getElementById('lobby-waiting-msg').style.display = 'block';
     return;
   }
 
-  // WRITING
-  if (data.status === 'writing') {
-    const ready = data.readyForTurn || [];
-    if (ready.includes(myId)) {
-      renderWaiting(players, ready, 'waiting-list');
-      showScreen('screen-waiting');
+  if (d.status==='writing') {
+    if ((d.readyForTurn||[]).includes(myId)) {
+      renderWait(players, d.readyForTurn||[], 'wait-stories-list');
+      show('s-wait-stories');
     } else {
-      const turn = data.currentTurn;
-      const max = data.maxTurns;
-      document.getElementById('write-status').textContent = `Ход ${turn} из ${max}`;
-      document.getElementById('write-progress-text').textContent = `Ход ${turn} из ${max}`;
-      document.getElementById('write-progress-fill').style.width = `${(turn/max)*100}%`;
-
-      // Topic/character hint
-      let hint = data.topic && data.topic !== '🚫 Без темы' ? data.topic : '';
-      if (data.character) hint += (hint ? ' · ' : '') + data.character;
-      document.getElementById('write-topic-label').textContent = hint;
-
-      // Show finish early button after turn 2
-      document.getElementById('finish-early-btn').style.display = turn > 2 ? 'block' : 'none';
-
-      if (document.getElementById('screen-write').classList.contains('active')) return;
-      skippedWords = [];
-      document.getElementById('story-textarea').value = '';
-      document.getElementById('skipped-words-display').innerHTML = '';
-      updateCharCount();
-
-      // Placeholder hint
-      let placeholder = 'Однажды…';
-      if (data.topic && data.topic !== '🚫 Без темы') placeholder = `История про ${data.topic}…`;
-      if (data.character) placeholder = `История про ${data.character}…`;
-      document.getElementById('story-textarea').placeholder = placeholder;
-
-      showScreen('screen-write');
+      setupWriteScreen(d);
+      show('s-write');
     }
     return;
   }
 
-  // ANSWERING
-  if (data.status === 'answering') {
-    const ready = data.readyForAnswers || [];
-    if (ready.includes(myId)) {
-      renderWaiting(players, ready, 'waiting-answers-list');
-      showScreen('screen-waiting-answers');
+  if (d.status==='answering') {
+    if ((d.readyForAnswers||[]).includes(myId)) {
+      renderWait(players, d.readyForAnswers||[], 'wait-answers-list');
+      show('s-wait-answers');
     } else {
-      buildQuestionsUI(data);
-      document.getElementById('answer-status').textContent = `Ход ${data.currentTurn} из ${data.maxTurns}`;
-      if (document.getElementById('screen-answer').classList.contains('active')) return;
-      showScreen('screen-answer');
+      setupAnswerScreen(d);
+      show('s-answer');
     }
     return;
   }
 
-  // FINISHED
-  if (data.status === 'finished') {
-    buildFinalStories(data);
-    showScreen('screen-final');
-    return;
+  if (d.status==='finished') {
+    renderFinal(d);
+    show('s-final');
   }
 }
 
-function renderLobbyPlayers(players) {
-  const el = document.getElementById('lobby-players');
-  el.innerHTML = '';
-  players.forEach((p, i) => {
-    el.innerHTML += `
-      <div class="player-item">
-        <div class="player-avatar">${p.name[0].toUpperCase()}</div>
-        <div class="player-name">${p.name}</div>
-        ${i === 0 ? '<div class="player-badge">ХОСТ</div>' : ''}
-      </div>`;
-  });
+// ═══ LOBBY ═══
+function renderLobby(players, max) {
+  document.getElementById('lobby-players').innerHTML = players.map((p,i) =>
+    `<div class="player-item">
+      <div class="player-avatar">${p.name[0].toUpperCase()}</div>
+      <div>${p.name}</div>
+      ${i===0?'<div class="player-badge">ХОСТ</div>':''}
+    </div>`
+  ).join('');
+  document.getElementById('lobby-status').textContent =
+    players.length>=max ? 'Запускаем игру…' : `Ждём игроков… ${players.length}/${max}`;
 }
 
-function renderWaiting(players, ready, listId) {
-  const el = document.getElementById(listId);
-  if (!el) return;
-  el.innerHTML = '';
-  players.forEach(p => {
-    const done = ready.includes(p.id);
-    el.innerHTML += `
-      <div class="waiting-item ${done ? 'done' : ''}">
-        <span class="waiting-icon">${done ? '✓' : '…'}</span>
-        <span>${p.name}</span>
-      </div>`;
-  });
+// ═══ WRITE ═══
+function setupWriteScreen(d) {
+  const turn=d.currentTurn, max=d.maxTurns;
+  document.getElementById('write-status-text').textContent=`Ход ${turn} из ${max}`;
+  document.getElementById('write-progress').style.width=`${(turn/max)*100}%`;
+  const parts=[d.topic,d.character].filter(Boolean);
+  document.getElementById('write-hint').textContent=parts.join(' · ')||'';
+  document.getElementById('btn-finish-early').style.display = turn>2?'block':'none';
+  // Reset only if not already on write screen
+  if (!document.getElementById('s-write').classList.contains('active')) {
+    skips=[];
+    document.getElementById('inp-story').value='';
+    document.getElementById('skipped-tags').innerHTML='';
+    document.getElementById('char-count').textContent='0 / 500';
+    document.getElementById('inp-story').placeholder = d.topic ? `История про ${d.topic}…` : 'Однажды…';
+    document.getElementById('btn-story-done').disabled=false;
+  }
 }
 
-// ——— WRITE STORY ———
-window.updateCharCount = function() {
-  const ta = document.getElementById('story-textarea');
-  const len = ta.value.length;
-  const el = document.getElementById('char-count');
-  el.textContent = `${len} / 500`;
-  el.className = 'char-count' + (len > 450 ? ' warn' : '');
+window.onStoryInput = () => {
+  const len=document.getElementById('inp-story').value.length;
+  const el=document.getElementById('char-count');
+  el.textContent=`${len} / 500`;
+  el.className='char-count'+(len>450?' warn':'');
 };
 
-window.openSkipModal = function() {
-  document.getElementById('skip-question-input').value = '';
-  document.getElementById('skip-modal').classList.add('open');
-  setTimeout(() => document.getElementById('skip-question-input').focus(), 100);
+window.openSkipModal = () => {
+  document.getElementById('inp-skip-q').value='';
+  document.getElementById('modal-skip').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-skip-q').focus(),100);
 };
-
-window.closeSkipModal = function() {
-  document.getElementById('skip-modal').classList.remove('open');
-};
-
-window.confirmSkip = function() {
-  const q = document.getElementById('skip-question-input').value.trim();
-  if (!q) { showToast('Напиши вопрос!'); return; }
-  const ta = document.getElementById('story-textarea');
-  const pos = ta.selectionStart || ta.value.length;
-  skippedWords.push({ question: q, position: pos, index: skippedWords.length });
-  // Insert placeholder in text
-  const before = ta.value.substring(0, pos);
-  const after = ta.value.substring(pos);
-  ta.value = before + `[___]` + after;
-  updateCharCount();
-  renderSkippedTags();
+window.closeSkipModal = () => document.getElementById('modal-skip').classList.remove('open');
+window.confirmSkip = () => {
+  const q=document.getElementById('inp-skip-q').value.trim();
+  if (!q) { toast('Напиши вопрос!'); return; }
+  const ta=document.getElementById('inp-story');
+  const pos=ta.selectionStart||ta.value.length;
+  ta.value=ta.value.slice(0,pos)+'[___]'+ta.value.slice(pos);
+  skips.push({question:q});
+  document.getElementById('skipped-tags').innerHTML=skips.map((s,i)=>`<span class="skipped-tag">[${i+1}] ${s.question}</span>`).join('');
+  onStoryInput();
   closeSkipModal();
 };
 
-function renderSkippedTags() {
-  const el = document.getElementById('skipped-words-display');
-  el.innerHTML = skippedWords.map((w, i) =>
-    `<span class="skipped-tag">[${i+1}] ${w.question}</span>`
-  ).join('');
-}
+window.submitStory = async () => {
+  const text=document.getElementById('inp-story').value.trim();
+  if (!text) { toast('Напиши историю!'); return; }
+  if (!skips.length) { toast('Пропусти хотя бы одно слово!'); return; }
+  document.getElementById('btn-story-done').disabled=true;
 
-window.submitStory = async function() {
-  const text = document.getElementById('story-textarea').value.trim();
-  if (!text) { showToast('Напиши историю!'); return; }
-  if (skippedWords.length === 0) { showToast('Пропусти хотя бы одно слово!'); return; }
-
-  const btn = document.getElementById('story-submit-btn');
-  btn.disabled = true;
-
-  const roomRef = doc(db, 'rooms', roomId);
-  const turn = gameData.currentTurn;
-  const totalPlayers = gameData.players.length;
-
-  // Save story and mark ready
-  await updateDoc(roomRef, {
-    [`stories.${myId}_${turn}`]: {
-      text,
-      questions: skippedWords.map(w => w.question),
-      authorId: myId,
-      authorName: myName,
-      turn
-    },
+  const turn=gameData.currentTurn;
+  await updateDoc(doc(db,'rooms',roomId), {
+    [`stories.${myId}_${turn}`]: {text, questions:skips.map(s=>s.question), authorId:myId, authorName:myName, turn},
     readyForTurn: arrayUnion(myId)
   });
 
-  // Wait a moment then check if all ready
-  setTimeout(async () => {
-    const snap = await getDoc(roomRef);
-    const d = snap.data();
-    const ready = d.readyForTurn || [];
-    if (ready.length >= totalPlayers && d.status === 'writing') {
-      await updateDoc(roomRef, { status: 'answering', readyForAnswers: [] });
+  // Check if all done
+  setTimeout(async()=>{
+    const snap=await getDoc(doc(db,'rooms',roomId));
+    const d=snap.data();
+    if ((d.readyForTurn||[]).length >= d.players.length && d.status==='writing') {
+      await updateDoc(doc(db,'rooms',roomId), {status:'answering', readyForAnswers:[]});
     }
-    btn.disabled = false;
-  }, 500);
+  }, 600);
 };
 
-// ——— ANSWER ———
-function buildQuestionsUI(data) {
-  const players = data.players || [];
-  const turn = data.currentTurn;
-  const myIndex = players.findIndex(p => p.id === myId);
-  // Get questions from previous player (circular)
-  const prevIndex = (myIndex - 1 + players.length) % players.length;
-  const prevPlayer = players[prevIndex];
-  const storyKey = `${prevPlayer.id}_${turn}`;
-  const story = data.stories?.[storyKey];
+window.finishEarly = async () => {
+  if (!confirm('Завершить игру прямо сейчас?')) return;
+  await updateDoc(doc(db,'rooms',roomId), {status:'finished'});
+};
 
-  const list = document.getElementById('questions-list');
-  list.innerHTML = '';
-
-  if (!story || !story.questions || story.questions.length === 0) {
-    list.innerHTML = '<p>Нет вопросов для тебя</p>';
-    return;
-  }
-
-  story.questions.forEach((q, i) => {
-    list.innerHTML += `
-      <div class="question-item">
-        <div class="question-label">Вопрос ${i+1}</div>
-        <div class="question-text">${q}</div>
-        <input type="text" placeholder="Твой ответ…" id="answer-${i}" maxlength="100">
-      </div>`;
-  });
+// ═══ ANSWER ═══
+function setupAnswerScreen(d) {
+  document.getElementById('answer-status-text').textContent=`Ход ${d.currentTurn} из ${d.maxTurns}`;
+  const players=d.players||[];
+  const myIdx=players.findIndex(p=>p.id===myId);
+  const prevIdx=(myIdx-1+players.length)%players.length;
+  const storyKey=`${players[prevIdx].id}_${d.currentTurn}`;
+  const story=d.stories?.[storyKey];
+  const list=document.getElementById('questions-list');
+  if (!story?.questions?.length) { list.innerHTML='<p style="color:var(--muted)">Нет вопросов</p>'; return; }
+  list.innerHTML=story.questions.map((q,i)=>`
+    <div class="q-item">
+      <div class="q-label">Вопрос ${i+1}</div>
+      <div class="q-text">${q}</div>
+      <input type="text" id="ans-${i}" placeholder="Твой ответ…" maxlength="100">
+    </div>`).join('');
+  document.getElementById('btn-answers-done').disabled=false;
 }
 
-window.submitAnswers = async function() {
-  const data = gameData;
-  const players = data.players || [];
-  const turn = data.currentTurn;
-  const myIndex = players.findIndex(p => p.id === myId);
-  const prevIndex = (myIndex - 1 + players.length) % players.length;
-  const prevPlayer = players[prevIndex];
-  const storyKey = `${prevPlayer.id}_${turn}`;
-  const story = data.stories?.[storyKey];
-
+window.submitAnswers = async () => {
+  document.getElementById('btn-answers-done').disabled=true;
+  const d=gameData, players=d.players||[];
+  const myIdx=players.findIndex(p=>p.id===myId);
+  const prevIdx=(myIdx-1+players.length)%players.length;
+  const storyKey=`${players[prevIdx].id}_${d.currentTurn}`;
+  const story=d.stories?.[storyKey];
   if (!story) return;
 
-  const answers = [];
-  for (let i = 0; i < story.questions.length; i++) {
-    const val = document.getElementById(`answer-${i}`)?.value.trim() || '???';
-    answers.push(val);
-  }
-
-  const btn = document.getElementById('answers-submit-btn');
-  btn.disabled = true;
-
-  const roomRef = doc(db, 'rooms', roomId);
-  await updateDoc(roomRef, {
+  const answers=story.questions.map((_,i)=>document.getElementById(`ans-${i}`)?.value.trim()||'???');
+  await updateDoc(doc(db,'rooms',roomId), {
     [`answers.${storyKey}`]: answers,
     readyForAnswers: arrayUnion(myId)
   });
 
-  // Wait then check if all answered
-  setTimeout(async () => {
-    const snap = await getDoc(roomRef);
-    const d = snap.data();
-    const ready = d.readyForAnswers || [];
-    if (ready.length >= players.length && d.status === 'answering') {
-      if (d.currentTurn >= d.maxTurns) {
-        await updateDoc(roomRef, { status: 'finished' });
+  setTimeout(async()=>{
+    const snap=await getDoc(doc(db,'rooms',roomId));
+    const d2=snap.data();
+    if ((d2.readyForAnswers||[]).length >= d2.players.length && d2.status==='answering') {
+      if (d2.currentTurn >= d2.maxTurns) {
+        await updateDoc(doc(db,'rooms',roomId), {status:'finished'});
       } else {
-        await updateDoc(roomRef, {
-          status: 'writing',
-          currentTurn: d.currentTurn + 1,
-          readyForTurn: [],
-          readyForAnswers: []
+        await updateDoc(doc(db,'rooms',roomId), {
+          status:'writing', currentTurn:d2.currentTurn+1, readyForTurn:[], readyForAnswers:[]
         });
       }
     }
-    btn.disabled = false;
-  }, 500);
+  }, 600);
 };
 
-// ——— FINAL ———
-function buildFinalStories(data) {
-  const players = data.players || [];
-  const container = document.getElementById('final-stories');
-  container.innerHTML = '';
-
-  players.forEach(player => {
-    let fullText = '<div class="story-card">';
-    fullText += `<div class="story-card-title">История ${player.name}</div>`;
-
-    for (let turn = 1; turn <= data.maxTurns; turn++) {
-      const storyKey = `${player.id}_${turn}`;
-      const story = data.stories?.[storyKey];
-      if (!story) continue;
-
-      const answers = data.answers?.[storyKey] || [];
-      let text = story.text;
-      let ansIdx = 0;
-      // Replace [___] with answers
-      text = text.replace(/\[___\]/g, () => {
-        const ans = answers[ansIdx] || '???';
-        ansIdx++;
-        return `<span class="story-blank">${ans}</span>`;
-      });
-
-      fullText += `<div style="margin-bottom:16px">
-        <div style="font-size:11px;color:var(--muted);font-family:Unbounded,sans-serif;letter-spacing:1px;margin-bottom:8px">ХОД ${turn}</div>
-        <div class="story-text">${text}</div>
-      </div>`;
-    }
-
-    fullText += '</div>';
-    container.innerHTML += fullText;
-  });
+// ═══ WAIT ═══
+function renderWait(players, ready, elId) {
+  document.getElementById(elId).innerHTML=players.map(p=>`
+    <div class="waiting-item${ready.includes(p.id)?' done':''}">
+      <span>${ready.includes(p.id)?'✓':'…'}</span>
+      <span>${p.name}</span>
+    </div>`).join('');
 }
 
-window.downloadStories = function() {
-  const data = gameData;
-  if (!data) return;
-  const players = data.players || [];
-  let content = 'SHLÜZZ — Истории\n\n';
-
-  players.forEach(player => {
-    content += `═══ История ${player.name} ═══\n\n`;
-    for (let turn = 1; turn <= data.maxTurns; turn++) {
-      const storyKey = `${player.id}_${turn}`;
-      const story = data.stories?.[storyKey];
-      if (!story) continue;
-      const answers = data.answers?.[storyKey] || [];
-      let text = story.text;
-      let ansIdx = 0;
-      text = text.replace(/\[___\]/g, () => answers[ansIdx++] || '???');
-      content += `Ход ${turn}:\n${text}\n\n`;
+// ═══ FINAL ═══
+function renderFinal(d) {
+  const players=d.players||[];
+  document.getElementById('final-stories').innerHTML=players.map(player=>{
+    let html=`<div class="story-card"><div class="story-card-title">История ${player.name}</div>`;
+    for(let t=1;t<=d.maxTurns;t++){
+      const sk=`${player.id}_${t}`;
+      const story=d.stories?.[sk]; if(!story) continue;
+      const answers=d.answers?.[sk]||[];
+      let txt=story.text; let i=0;
+      txt=txt.replace(/\[___\]/g,()=>`<span class="story-blank">${answers[i++]||'???'}</span>`);
+      html+=`<div class="turn-label" style="margin-top:12px">ХОД ${t}</div><div class="story-text">${txt}</div>`;
     }
-    content += '\n';
+    return html+'</div>';
+  }).join('');
+}
+
+window.downloadStories = () => {
+  const d=gameData; if(!d) return;
+  let txt='SHLÜZZ — Истории\n\n';
+  (d.players||[]).forEach(p=>{
+    txt+=`═══ ${p.name} ═══\n\n`;
+    for(let t=1;t<=d.maxTurns;t++){
+      const sk=`${p.id}_${t}`;
+      const story=d.stories?.[sk]; if(!story) continue;
+      const ans=d.answers?.[sk]||[];
+      let tx=story.text; let i=0;
+      tx=tx.replace(/\[___\]/g,()=>ans[i++]||'???');
+      txt+=`Ход ${t}:\n${tx}\n\n`;
+    }
   });
-
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'shluzz-stories.txt';
-  a.click();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
+  a.download='shluzz-stories.txt'; a.click();
 };
 
-window.resetAndGoHome = function() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  myId = '';
-  roomId = '';
-  isCreator = false;
-  gameData = null;
-  skippedWords = [];
-  selectedTopic = 'none';
-  selectedCharacter = 'none';
-  document.getElementById('player-name-input').value = myName;
-  document.getElementById('home-error').textContent = '';
-  showScreen('screen-home');
-  subscribeRooms();
-};
-
-window.confirmFinishEarly = async function() {
-  if (!confirm('Завершить игру прямо сейчас? Все получат истории с текущими ходами.')) return;
-  const roomRef = doc(db, 'rooms', roomId);
-  await updateDoc(roomRef, { status: 'finished' });
-};
-
-// Init
-buildTopicsGrid();
-buildCharactersGrid();
-subscribeRooms();
+// ═══ INIT ═══
+startRoomsListener();
 </script>
 </body>
 </html>
