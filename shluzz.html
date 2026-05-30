@@ -881,7 +881,17 @@ function subscribeRooms() {
   const q = query(collection(db, 'rooms'), where('status', '==', 'lobby'));
   unsubscribeRooms = onSnapshot(q, (snapshot) => {
     const rooms = [];
-    snapshot.forEach(d => rooms.push({ id: d.id, ...d.data() }));
+    const now = Date.now();
+    snapshot.forEach(d => {
+      const data = d.data();
+      // Auto-delete rooms older than 2 hours
+      const createdAt = data.createdAt?.toMillis?.() || 0;
+      if (now - createdAt > 2 * 60 * 60 * 1000) {
+        updateDoc(doc(db, 'rooms', d.id), { status: 'expired' });
+      } else {
+        rooms.push({ id: d.id, ...data });
+      }
+    });
     renderRoomsList(rooms);
   });
 }
