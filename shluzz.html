@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SHLÜZZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Raleway:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --accent: #c8f55a;
+    --accent2: #ff6b6b;
+    --text: #f0f0f0;
+    --muted: #666;
+    --border: #2a2a35;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Raleway', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .screen {
+    display: none;
+    min-height: 100vh;
+    padding: 24px 20px;
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* LOGO */
+  .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .logo-sub {
+    font-family: 'Raleway', sans-serif;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* INPUTS */
+  input, textarea, select {
+    width: 100%;
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Raleway', sans-serif;
+    font-size: 16px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+
+  textarea {
+    min-height: 180px;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  select option { background: #1a1a24; }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0f;
+  }
+  .btn-primary:hover { background: #d4ff6a; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+
+  .btn-small {
+    width: auto;
+    padding: 10px 16px;
+    font-size: 11px;
+    margin-bottom: 0;
+    border-radius: 8px;
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* PILL / TAG */
+  .pill {
+    display: inline-block;
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 4px 4px 0;
+  }
+  .pill.active {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* PLAYER LIST */
+  .player-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .player-item:last-child { border-bottom: none; }
+
+  .player-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #0a0a0f;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .player-name { font-weight: 400; font-size: 15px; }
+  .player-badge {
+    margin-left: auto;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  /* ROOM CODE */
+  .room-code {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 8px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .status-text {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* TURN INDICATOR */
+  .turn-badge {
+    background: var(--accent);
+    color: #0a0a0f;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  /* PROGRESS */
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* SKIP WORD MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 20px 20px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* STORY DISPLAY */
+  .story-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .story-blank {
+    display: inline-block;
+    color: var(--accent);
+    font-weight: 700;
+    border-bottom: 2px solid var(--accent);
+    min-width: 80px;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  /* QUESTIONS LIST */
+  .question-item {
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .question-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+  }
+  .question-text {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent);
+  }
+
+  /* CHAR COUNT */
+  .char-count {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 6px;
+  }
+  .char-count.warn { color: var(--accent2); }
+
+  /* INLINE STORY BUILDER */
+  .story-builder {
+    position: relative;
+  }
+  .skip-btn-inline {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+  .skip-btn-inline:hover { background: rgba(200,245,90,0.08); }
+
+  .skipped-words {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .skipped-tag {
+    background: rgba(200,245,90,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* FINAL STORIES */
+  .story-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .story-card-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  /* WAITING */
+  .waiting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .waiting-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .waiting-item.done { color: var(--text); }
+  .waiting-icon { font-size: 16px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--accent);
+    color: #0a0a0f;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 30px;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  p { color: var(--muted); font-size: 14px; margin-bottom: 16px; line-height: 1.6; }
+
+  .spacer { flex: 1; }
+
+  .error-msg {
+    color: var(--accent2);
+    font-size: 13px;
+    margin-top: -8px;
+    margin-bottom: 12px;
+  }
+
+  /* SETUP screen slider */
+  .range-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  input[type=range] {
+    flex: 1;
+    padding: 0;
+    height: 4px;
+    accent-color: var(--accent);
+    background: var(--border);
+    border: none;
+    border-radius: 2px;
+  }
+  .range-val {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .topics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .topic-btn {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Raleway', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+  .topic-btn.selected {
+    border-color: var(--accent);
+    background: rgba(200,245,90,0.08);
+    color: var(--accent);
+  }
+
+  .name-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .name-input-row input { flex: 1; margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN: Home -->
+<div class="screen active" id="screen-home">
+  <div class="logo">SHLÜZZ</div>
+  <div class="logo-sub">игра слов и воображения</div>
+
+  <div class="card">
+    <div class="card-title">Твоё имя</div>
+    <input type="text" id="player-name-input" placeholder="Введи своё имя" maxlength="20">
+  </div>
+
+  <div class="card">
+    <div class="card-title">Войти в игру</div>
+    <button class="btn btn-primary" onclick="goCreate()">✦ Создать шлюз</button>
+    <button class="btn btn-secondary" onclick="showJoin()">→ Войти по коду</button>
+    <div id="join-form" style="display:none; margin-top:8px;">
+      <input type="text" id="room-code-input" placeholder="Код комнаты (6 букв)" maxlength="6" style="text-transform:uppercase; margin-bottom:10px;">
+      <button class="btn btn-primary" onclick="joinRoom()">Войти</button>
+    </div>
+    <div id="home-error" class="error-msg"></div>
+  </div>
+
+  <div class="spacer"></div>
+  <p style="text-align:center; font-size:12px;">2–4 игрока · онлайн</p>
+</div>
+
+<!-- SCREEN: Setup (creator) -->
+<div class="screen" id="screen-setup">
+  <div class="logo">SHLÜZZ</div>
+  <h2>Настройка шлюза</h2>
+  <p>Ты создаёшь комнату. Выбери тему и количество ходов.</p>
+
+  <div class="card">
+    <div class="card-title">Тема игры</div>
+    <div class="topics-grid" id="topics-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Количество ходов</div>
+    <div class="range-row">
+      <span style="font-size:12px;color:var(--muted)">5</span>
+      <input type="range" id="turns-range" min="5" max="15" value="7" oninput="document.getElementById('turns-val').textContent=this.value">
+      <span style="font-size:12px;color:var(--muted)">15</span>
+      <div class="range-val" id="turns-val">7</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="createRoom()">Создать шлюз →</button>
+  <button class="btn btn-secondary" onclick="showScreen('screen-home')">← Назад</button>
+</div>
+
+<!-- SCREEN: Lobby -->
+<div class="screen" id="screen-lobby">
+  <div class="logo">SHLÜZZ</div>
+
+  <div class="card">
+    <div class="card-title">Код шлюза — отправь подруге!</div>
+    <div class="room-code" id="lobby-code">------</div>
+    <button class="btn btn-secondary btn-small" onclick="copyCode()" style="width:100%">Скопировать код</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Игроки</div>
+    <div id="lobby-players"></div>
+  </div>
+
+  <div id="lobby-start-btn" style="display:none">
+    <button class="btn btn-primary" onclick="startGame()">Начать игру ✦</button>
+  </div>
+
+  <p id="lobby-waiting-msg" style="text-align:center;font-size:13px;">Жди пока все подключатся…</p>
+</div>
+
+<!-- SCREEN: Write story -->
+<div class="screen" id="screen-write">
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text" id="write-status">Ход 1</div>
+  </div>
+
+  <h2>Пиши историю</h2>
+  <p>Придумай историю, пропуская некоторые слова. Нажми кнопку ниже чтобы вставить пропуск.</p>
+
+  <div class="card story-builder">
+    <textarea id="story-textarea" placeholder="Однажды…" maxlength="500" oninput="updateCharCount()"></textarea>
+    <div class="char-count" id="char-count">0 / 500</div>
+    <div class="skipped-words" id="skipped-words-display"></div>
+    <button class="skip-btn-inline" onclick="openSkipModal()">+ пропустить слово</button>
+  </div>
+
+  <button class="btn btn-primary" onclick="submitStory()" id="story-submit-btn">Готово →</button>
+</div>
+
+<!-- SCREEN: Waiting -->
+<div class="screen" id="screen-waiting">
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text">Ожидание</div>
+  </div>
+  <h2>Ждём остальных…</h2>
+  <p>Все пишут свои истории. Скоро придут вопросы!</p>
+  <div class="waiting-list" id="waiting-list"></div>
+</div>
+
+<!-- SCREEN: Answer questions -->
+<div class="screen" id="screen-answer">
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text" id="answer-status">Ход 1</div>
+  </div>
+
+  <h2>Отвечай на вопросы</h2>
+  <p>Отвечай смешно и необычно — ты не знаешь чью историю заполняешь!</p>
+
+  <div id="questions-list"></div>
+
+  <button class="btn btn-primary" onclick="submitAnswers()" id="answers-submit-btn">Готово →</button>
+</div>
+
+<!-- SCREEN: Waiting for answers -->
+<div class="screen" id="screen-waiting-answers">
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text">Ожидание</div>
+  </div>
+  <h2>Ждём остальных…</h2>
+  <p>Все отвечают на вопросы. Скоро следующий ход!</p>
+  <div class="waiting-list" id="waiting-answers-list"></div>
+</div>
+
+<!-- SCREEN: Final -->
+<div class="screen" id="screen-final">
+  <div class="logo">SHLÜZZ</div>
+  <h2>Истории готовы! 🎉</h2>
+  <p>Читайте что получилось — и смейтесь!</p>
+  <div id="final-stories"></div>
+  <button class="btn btn-primary" onclick="downloadStories()">Скачать истории</button>
+  <button class="btn btn-secondary" onclick="showScreen('screen-home')">Играть снова</button>
+</div>
+
+<!-- SKIP WORD MODAL -->
+<div class="modal-overlay" id="skip-modal">
+  <div class="modal">
+    <div class="modal-title">Пропуск слова</div>
+    <div class="modal-sub">Напиши вопрос к пропущенному слову</div>
+    <input type="text" id="skip-question-input" placeholder='например: "что?", "какой?", "что делал?"' maxlength="60">
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-secondary btn-small" style="flex:1" onclick="closeSkipModal()">Отмена</button>
+      <button class="btn btn-primary btn-small" style="flex:1" onclick="confirmSkip()">Ок →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ——— FIREBASE CONFIG ———
+const firebaseConfig = {
+  apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
+  authDomain: "shluzz-a4e22.firebaseapp.com",
+  projectId: "shluzz-a4e22",
+  storageBucket: "shluzz-a4e22.firebasestorage.app",
+  messagingSenderId: "1006492767485",
+  appId: "1:1006492767485:web:68a2eb538a274f5a74ba76",
+  measurementId: "G-5LQNWQEN8Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ——— GAME STATE ———
+let myName = '';
+let myId = '';
+let roomId = '';
+let isCreator = false;
+let gameData = null;
+let unsubscribe = null;
+let skippedWords = []; // [{question, position}]
+let currentStoryText = '';
+
+const TOPICS = [
+  '🌙 Магический лес', '🚀 Космос', '🏙️ Большой город',
+  '🐉 Драконы и маги', '🕵️ Детектив', '🎪 Цирк',
+  '🍕 Кулинария', '⏰ Машина времени'
+];
+let selectedTopic = TOPICS[0];
+
+// ——— UTILS ———
+function genId(len = 6) {
+  return Math.random().toString(36).substring(2, 2 + len).toUpperCase();
+}
+function genPlayerId() {
+  return Math.random().toString(36).substring(2, 10);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showToast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ——— HOME ———
+window.showJoin = function() {
+  const f = document.getElementById('join-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+};
+
+window.goCreate = function() {
+  const name = document.getElementById('player-name-input').value.trim();
+  if (!name) { document.getElementById('home-error').textContent = 'Введи своё имя!'; return; }
+  myName = name;
+  myId = genPlayerId();
+  isCreator = true;
+  buildTopicsGrid();
+  showScreen('screen-setup');
+};
+
+window.joinRoom = async function() {
+  const name = document.getElementById('player-name-input').value.trim();
+  const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!name) { document.getElementById('home-error').textContent = 'Введи своё имя!'; return; }
+  if (code.length < 4) { document.getElementById('home-error').textContent = 'Введи код комнаты'; return; }
+  myName = name;
+  myId = genPlayerId();
+  roomId = code;
+  isCreator = false;
+
+  const roomRef = doc(db, 'rooms', roomId);
+  const snap = await getDoc(roomRef);
+  if (!snap.exists()) { document.getElementById('home-error').textContent = 'Комната не найдена'; return; }
+
+  const data = snap.data();
+  if (data.players && data.players.length >= 4) { document.getElementById('home-error').textContent = 'Комната заполнена'; return; }
+  if (data.status !== 'lobby') { document.getElementById('home-error').textContent = 'Игра уже началась'; return; }
+
+  await updateDoc(roomRef, {
+    players: arrayUnion({ id: myId, name: myName })
+  });
+
+  document.getElementById('lobby-code').textContent = roomId;
+  subscribeRoom();
+  showScreen('screen-lobby');
+};
+
+// ——— SETUP ———
+function buildTopicsGrid() {
+  const grid = document.getElementById('topics-grid');
+  grid.innerHTML = '';
+  TOPICS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn' + (t === selectedTopic ? ' selected' : '');
+    btn.textContent = t;
+    btn.onclick = () => {
+      selectedTopic = t;
+      buildTopicsGrid();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+window.createRoom = async function() {
+  roomId = genId(5);
+  const roomRef = doc(db, 'rooms', roomId);
+
+  const turns = parseInt(document.getElementById('turns-range').value);
+
+  await setDoc(roomRef, {
+    status: 'lobby',
+    topic: selectedTopic,
+    maxTurns: turns,
+    currentTurn: 0,
+    players: [{ id: myId, name: myName }],
+    stories: {},
+    answers: {},
+    readyForTurn: [],
+    readyForAnswers: [],
+    createdAt: serverTimestamp()
+  });
+
+  document.getElementById('lobby-code').textContent = roomId;
+  subscribeRoom();
+  showScreen('screen-lobby');
+};
+
+// ——— LOBBY ———
+window.copyCode = function() {
+  navigator.clipboard.writeText(roomId).catch(() => {});
+  showToast('Код скопирован! ' + roomId);
+};
+
+window.startGame = async function() {
+  const roomRef = doc(db, 'rooms', roomId);
+  await updateDoc(roomRef, { status: 'writing', currentTurn: 1, readyForTurn: [] });
+};
+
+// ——— SUBSCRIBE ———
+function subscribeRoom() {
+  if (unsubscribe) unsubscribe();
+  const roomRef = doc(db, 'rooms', roomId);
+  unsubscribe = onSnapshot(roomRef, (snap) => {
+    if (!snap.exists()) return;
+    gameData = snap.data();
+    handleGameState(gameData);
+  });
+}
+
+function handleGameState(data) {
+  const players = data.players || [];
+
+  // LOBBY
+  if (data.status === 'lobby') {
+    renderLobbyPlayers(players);
+    const canStart = isCreator && players.length >= 2;
+    document.getElementById('lobby-start-btn').style.display = canStart ? 'block' : 'none';
+    document.getElementById('lobby-waiting-msg').style.display = canStart ? 'none' : 'block';
+    return;
+  }
+
+  // WRITING
+  if (data.status === 'writing') {
+    const ready = data.readyForTurn || [];
+    if (ready.includes(myId)) {
+      // Show waiting
+      renderWaiting(players, ready, 'waiting-list');
+      showScreen('screen-waiting');
+    } else {
+      document.getElementById('write-status').textContent = `Ход ${data.currentTurn} из ${data.maxTurns} · ${data.topic}`;
+      if (document.getElementById('screen-write').classList.contains('active')) return;
+      skippedWords = [];
+      document.getElementById('story-textarea').value = '';
+      document.getElementById('skipped-words-display').innerHTML = '';
+      updateCharCount();
+      showScreen('screen-write');
+    }
+    return;
+  }
+
+  // ANSWERING
+  if (data.status === 'answering') {
+    const ready = data.readyForAnswers || [];
+    if (ready.includes(myId)) {
+      renderWaiting(players, ready, 'waiting-answers-list');
+      showScreen('screen-waiting-answers');
+    } else {
+      buildQuestionsUI(data);
+      document.getElementById('answer-status').textContent = `Ход ${data.currentTurn} из ${data.maxTurns}`;
+      if (document.getElementById('screen-answer').classList.contains('active')) return;
+      showScreen('screen-answer');
+    }
+    return;
+  }
+
+  // FINISHED
+  if (data.status === 'finished') {
+    buildFinalStories(data);
+    showScreen('screen-final');
+    return;
+  }
+}
+
+function renderLobbyPlayers(players) {
+  const el = document.getElementById('lobby-players');
+  el.innerHTML = '';
+  players.forEach((p, i) => {
+    el.innerHTML += `
+      <div class="player-item">
+        <div class="player-avatar">${p.name[0].toUpperCase()}</div>
+        <div class="player-name">${p.name}</div>
+        ${i === 0 ? '<div class="player-badge">ХОСТ</div>' : ''}
+      </div>`;
+  });
+}
+
+function renderWaiting(players, ready, listId) {
+  const el = document.getElementById(listId);
+  if (!el) return;
+  el.innerHTML = '';
+  players.forEach(p => {
+    const done = ready.includes(p.id);
+    el.innerHTML += `
+      <div class="waiting-item ${done ? 'done' : ''}">
+        <span class="waiting-icon">${done ? '✓' : '…'}</span>
+        <span>${p.name}</span>
+      </div>`;
+  });
+}
+
+// ——— WRITE STORY ———
+window.updateCharCount = function() {
+  const ta = document.getElementById('story-textarea');
+  const len = ta.value.length;
+  const el = document.getElementById('char-count');
+  el.textContent = `${len} / 500`;
+  el.className = 'char-count' + (len > 450 ? ' warn' : '');
+};
+
+window.openSkipModal = function() {
+  document.getElementById('skip-question-input').value = '';
+  document.getElementById('skip-modal').classList.add('open');
+  setTimeout(() => document.getElementById('skip-question-input').focus(), 100);
+};
+
+window.closeSkipModal = function() {
+  document.getElementById('skip-modal').classList.remove('open');
+};
+
+window.confirmSkip = function() {
+  const q = document.getElementById('skip-question-input').value.trim();
+  if (!q) { showToast('Напиши вопрос!'); return; }
+  const ta = document.getElementById('story-textarea');
+  const pos = ta.selectionStart || ta.value.length;
+  skippedWords.push({ question: q, position: pos, index: skippedWords.length });
+  // Insert placeholder in text
+  const before = ta.value.substring(0, pos);
+  const after = ta.value.substring(pos);
+  ta.value = before + `[___]` + after;
+  updateCharCount();
+  renderSkippedTags();
+  closeSkipModal();
+};
+
+function renderSkippedTags() {
+  const el = document.getElementById('skipped-words-display');
+  el.innerHTML = skippedWords.map((w, i) =>
+    `<span class="skipped-tag">[${i+1}] ${w.question}</span>`
+  ).join('');
+}
+
+window.submitStory = async function() {
+  const text = document.getElementById('story-textarea').value.trim();
+  if (!text) { showToast('Напиши историю!'); return; }
+  if (skippedWords.length === 0) { showToast('Пропусти хотя бы одно слово!'); return; }
+
+  const btn = document.getElementById('story-submit-btn');
+  btn.disabled = true;
+
+  const roomRef = doc(db, 'rooms', roomId);
+  const turn = gameData.currentTurn;
+
+  // Save story
+  await updateDoc(roomRef, {
+    [`stories.${myId}_${turn}`]: {
+      text,
+      questions: skippedWords.map(w => w.question),
+      authorId: myId,
+      authorName: myName,
+      turn
+    },
+    readyForTurn: arrayUnion(myId)
+  });
+
+  // Check if all ready
+  const snap = await getDoc(roomRef);
+  const d = snap.data();
+  const players = d.players || [];
+  const ready = d.readyForTurn || [];
+  if (ready.length >= players.length) {
+    // Move to answering phase — shift questions
+    await updateDoc(roomRef, { status: 'answering', readyForAnswers: [] });
+  }
+
+  btn.disabled = false;
+};
+
+// ——— ANSWER ———
+function buildQuestionsUI(data) {
+  const players = data.players || [];
+  const turn = data.currentTurn;
+  const myIndex = players.findIndex(p => p.id === myId);
+  // Get questions from previous player (circular)
+  const prevIndex = (myIndex - 1 + players.length) % players.length;
+  const prevPlayer = players[prevIndex];
+  const storyKey = `${prevPlayer.id}_${turn}`;
+  const story = data.stories?.[storyKey];
+
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+
+  if (!story || !story.questions || story.questions.length === 0) {
+    list.innerHTML = '<p>Нет вопросов для тебя</p>';
+    return;
+  }
+
+  story.questions.forEach((q, i) => {
+    list.innerHTML += `
+      <div class="question-item">
+        <div class="question-label">Вопрос ${i+1}</div>
+        <div class="question-text">${q}</div>
+        <input type="text" placeholder="Твой ответ…" id="answer-${i}" maxlength="100">
+      </div>`;
+  });
+}
+
+window.submitAnswers = async function() {
+  const data = gameData;
+  const players = data.players || [];
+  const turn = data.currentTurn;
+  const myIndex = players.findIndex(p => p.id === myId);
+  const prevIndex = (myIndex - 1 + players.length) % players.length;
+  const prevPlayer = players[prevIndex];
+  const storyKey = `${prevPlayer.id}_${turn}`;
+  const story = data.stories?.[storyKey];
+
+  if (!story) return;
+
+  const answers = [];
+  for (let i = 0; i < story.questions.length; i++) {
+    const val = document.getElementById(`answer-${i}`)?.value.trim() || '???';
+    answers.push(val);
+  }
+
+  const btn = document.getElementById('answers-submit-btn');
+  btn.disabled = true;
+
+  const roomRef = doc(db, 'rooms', roomId);
+  await updateDoc(roomRef, {
+    [`answers.${storyKey}`]: answers,
+    readyForAnswers: arrayUnion(myId)
+  });
+
+  // Check if all answered
+  const snap = await getDoc(roomRef);
+  const d = snap.data();
+  const ready = d.readyForAnswers || [];
+  if (ready.length >= players.length) {
+    // Next turn or finish
+    if (d.currentTurn >= d.maxTurns) {
+      await updateDoc(roomRef, { status: 'finished' });
+    } else {
+      await updateDoc(roomRef, {
+        status: 'writing',
+        currentTurn: d.currentTurn + 1,
+        readyForTurn: [],
+        readyForAnswers: []
+      });
+    }
+  }
+
+  btn.disabled = false;
+};
+
+// ——— FINAL ———
+function buildFinalStories(data) {
+  const players = data.players || [];
+  const container = document.getElementById('final-stories');
+  container.innerHTML = '';
+
+  players.forEach(player => {
+    let fullText = '<div class="story-card">';
+    fullText += `<div class="story-card-title">История ${player.name}</div>`;
+
+    for (let turn = 1; turn <= data.maxTurns; turn++) {
+      const storyKey = `${player.id}_${turn}`;
+      const story = data.stories?.[storyKey];
+      if (!story) continue;
+
+      const answers = data.answers?.[storyKey] || [];
+      let text = story.text;
+      let ansIdx = 0;
+      // Replace [___] with answers
+      text = text.replace(/\[___\]/g, () => {
+        const ans = answers[ansIdx] || '???';
+        ansIdx++;
+        return `<span class="story-blank">${ans}</span>`;
+      });
+
+      fullText += `<div style="margin-bottom:16px">
+        <div style="font-size:11px;color:var(--muted);font-family:Unbounded,sans-serif;letter-spacing:1px;margin-bottom:8px">ХОД ${turn}</div>
+        <div class="story-text">${text}</div>
+      </div>`;
+    }
+
+    fullText += '</div>';
+    container.innerHTML += fullText;
+  });
+}
+
+window.downloadStories = function() {
+  const data = gameData;
+  if (!data) return;
+  const players = data.players || [];
+  let content = 'SHLÜZZ — Истории\n\n';
+
+  players.forEach(player => {
+    content += `═══ История ${player.name} ═══\n\n`;
+    for (let turn = 1; turn <= data.maxTurns; turn++) {
+      const storyKey = `${player.id}_${turn}`;
+      const story = data.stories?.[storyKey];
+      if (!story) continue;
+      const answers = data.answers?.[storyKey] || [];
+      let text = story.text;
+      let ansIdx = 0;
+      text = text.replace(/\[___\]/g, () => answers[ansIdx++] || '???');
+      content += `Ход ${turn}:\n${text}\n\n`;
+    }
+    content += '\n';
+  });
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'shluzz-stories.txt';
+  a.click();
+};
+
+// Init topics
+buildTopicsGrid();
+</script>
+</body>
+</html>
