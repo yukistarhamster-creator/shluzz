@@ -496,7 +496,70 @@
     margin-bottom: 12px;
   }
 
-  /* SETUP screen slider */
+  .room-item {
+    background: #1a1a24;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .room-item:hover { border-color: var(--accent); }
+  .room-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .room-creator {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .room-players {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .room-meta {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .room-empty {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* MAX PLAYERS selector */
+  .players-selector {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .players-opt {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .players-opt.selected {
+    border-color: var(--accent);
+    background: rgba(200,245,90,0.08);
+    color: var(--accent);
+  }
   .range-row {
     display: flex;
     align-items: center;
@@ -562,18 +625,17 @@
 
   <div class="card">
     <div class="card-title">Твоё имя</div>
-    <input type="text" id="player-name-input" placeholder="Введи своё имя" maxlength="20">
+    <input type="text" id="player-name-input" placeholder="Введи своё имя" maxlength="20" oninput="onNameInput()">
   </div>
 
-  <div class="card">
-    <div class="card-title">Войти в игру</div>
-    <button class="btn btn-primary" onclick="goCreate()">✦ Создать шлюз</button>
-    <button class="btn btn-secondary" onclick="showJoin()">→ Войти по коду</button>
-    <div id="join-form" style="display:none; margin-top:8px;">
-      <input type="text" id="room-code-input" placeholder="Код комнаты (6 букв)" maxlength="6" style="text-transform:uppercase; margin-bottom:10px;">
-      <button class="btn btn-primary" onclick="joinRoom()">Войти</button>
+  <button class="btn btn-primary" onclick="goCreate()" id="btn-create" disabled>✦ Создать шлюз</button>
+  <div id="home-error" class="error-msg"></div>
+
+  <div class="card" id="rooms-card">
+    <div class="card-title">Открытые шлюзы</div>
+    <div id="rooms-list">
+      <p style="text-align:center;padding:16px 0;">Загрузка…</p>
     </div>
-    <div id="home-error" class="error-msg"></div>
   </div>
 
   <div class="spacer"></div>
@@ -603,7 +665,15 @@
   </div>
 
   <div class="card">
-    <div class="card-title">Количество ходов</div>
+    <div class="card-title">Количество игроков</div>
+    <div class="players-selector" id="players-selector">
+      <button class="players-opt selected" onclick="selectMaxPlayers(2)">2</button>
+      <button class="players-opt" onclick="selectMaxPlayers(3)">3</button>
+      <button class="players-opt" onclick="selectMaxPlayers(4)">4</button>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="range-row">
       <span style="font-size:12px;color:var(--muted)">3</span>
       <input type="range" id="turns-range" min="3" max="15" value="5" oninput="document.getElementById('turns-val').textContent=this.value">
@@ -732,7 +802,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ——— FIREBASE CONFIG ———
 const firebaseConfig = {
@@ -755,8 +825,10 @@ let roomId = '';
 let isCreator = false;
 let gameData = null;
 let unsubscribe = null;
-let skippedWords = []; // [{question, position}]
+let unsubscribeRooms = null;
+let skippedWords = [];
 let currentStoryText = '';
+let maxPlayers = 2;
 
 const TOPICS = [
   '🌙 Магический лес', '🚀 Космос', '🏙️ Большой город',
@@ -798,9 +870,69 @@ function showToast(msg, dur = 2500) {
 }
 
 // ——— HOME ———
-window.showJoin = function() {
-  const f = document.getElementById('join-form');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+window.onNameInput = function() {
+  const name = document.getElementById('player-name-input').value.trim();
+  document.getElementById('btn-create').disabled = !name;
+};
+
+window.selectMaxPlayers = function(n) {
+  maxPlayers = n;
+  document.querySelectorAll('.players-opt').forEach((btn, i) => {
+    btn.classList.toggle('selected', i + 2 === n);
+  });
+};
+
+function subscribeRooms() {
+  if (unsubscribeRooms) unsubscribeRooms();
+  const q = query(collection(db, 'rooms'), where('status', '==', 'lobby'));
+  unsubscribeRooms = onSnapshot(q, (snapshot) => {
+    const rooms = [];
+    snapshot.forEach(d => rooms.push({ id: d.id, ...d.data() }));
+    renderRoomsList(rooms);
+  });
+}
+
+function renderRoomsList(rooms) {
+  const el = document.getElementById('rooms-list');
+  if (!rooms.length) {
+    el.innerHTML = '<div class="room-empty">Нет открытых шлюзов.<br>Создай свой!</div>';
+    return;
+  }
+  el.innerHTML = rooms.map(r => {
+    const current = r.players?.length || 0;
+    const max = r.maxPlayers || 2;
+    const meta = [r.topic !== '🚫 Без темы' ? r.topic : null, r.character].filter(Boolean).join(' · ') || 'Без темы';
+    return `
+      <div class="room-item" onclick="joinRoomFromList('${r.id}')">
+        <div class="room-item-header">
+          <div class="room-creator">${r.players?.[0]?.name || '?'}</div>
+          <div class="room-players">${current}/${max} игроков</div>
+        </div>
+        <div class="room-meta">${meta} · ${r.maxTurns} ходов</div>
+      </div>`;
+  }).join('');
+}
+
+window.joinRoomFromList = async function(rid) {
+  const name = document.getElementById('player-name-input').value.trim();
+  if (!name) { document.getElementById('home-error').textContent = 'Сначала введи имя!'; return; }
+  myName = name;
+  myId = genPlayerId();
+  roomId = rid;
+  isCreator = false;
+
+  const roomRef = doc(db, 'rooms', roomId);
+  const snap = await getDoc(roomRef);
+  if (!snap.exists()) { document.getElementById('home-error').textContent = 'Шлюз не найден'; return; }
+
+  const data = snap.data();
+  if (data.status !== 'lobby') { document.getElementById('home-error').textContent = 'Игра уже началась'; return; }
+  if (data.players?.length >= (data.maxPlayers || 2)) { document.getElementById('home-error').textContent = 'Шлюз заполнен'; return; }
+
+  await updateDoc(roomRef, { players: arrayUnion({ id: myId, name: myName }) });
+  document.getElementById('lobby-code').textContent = roomId;
+  subscribeRoom();
+  showScreen('screen-lobby');
 };
 
 window.goCreate = function() {
@@ -834,9 +966,16 @@ window.joinRoom = async function() {
   if (data.players && data.players.length >= 4) { document.getElementById('home-error').textContent = 'Комната заполнена'; return; }
   if (data.status !== 'lobby') { document.getElementById('home-error').textContent = 'Игра уже началась'; return; }
 
-  await updateDoc(roomRef, {
-    players: arrayUnion({ id: myId, name: myName })
-  });
+  // Check if player with same name already exists
+  const existingPlayer = data.players?.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existingPlayer) {
+    // Reuse existing player id
+    myId = existingPlayer.id;
+  } else {
+    await updateDoc(roomRef, {
+      players: arrayUnion({ id: myId, name: myName })
+    });
+  }
 
   document.getElementById('lobby-code').textContent = roomId;
   subscribeRoom();
@@ -941,6 +1080,7 @@ window.createRoom = async function() {
     topic: finalTopic,
     character: finalCharacter,
     maxTurns: turns,
+    maxPlayers: maxPlayers,
     currentTurn: 0,
     players: [{ id: myId, name: myName }],
     stories: {},
@@ -983,9 +1123,17 @@ function handleGameState(data) {
   // LOBBY
   if (data.status === 'lobby') {
     renderLobbyPlayers(players);
-    const canStart = isCreator && players.length >= 2;
-    document.getElementById('lobby-start-btn').style.display = canStart ? 'block' : 'none';
-    document.getElementById('lobby-waiting-msg').style.display = canStart ? 'none' : 'block';
+    const max = data.maxPlayers || 2;
+    const isFull = players.length >= max;
+    // Autostart when full - only creator triggers it
+    if (isFull && isCreator) {
+      const roomRef = doc(db, 'rooms', roomId);
+      updateDoc(roomRef, { status: 'writing', currentTurn: 1, readyForTurn: [] });
+      return;
+    }
+    document.getElementById('lobby-start-btn').style.display = 'none';
+    document.getElementById('lobby-waiting-msg').textContent = isFull ? 'Запускаем игру…' : `Ждём игроков… ${players.length}/${max}`;
+    document.getElementById('lobby-waiting-msg').style.display = 'block';
     return;
   }
 
@@ -1304,10 +1452,10 @@ window.resetAndGoHome = function() {
   skippedWords = [];
   selectedTopic = 'none';
   selectedCharacter = 'none';
-  document.getElementById('player-name-input').value = myName; // keep name
+  document.getElementById('player-name-input').value = myName;
   document.getElementById('home-error').textContent = '';
-  document.getElementById('join-form').style.display = 'none';
   showScreen('screen-home');
+  subscribeRooms();
 };
 
 window.confirmFinishEarly = async function() {
@@ -1316,9 +1464,10 @@ window.confirmFinishEarly = async function() {
   await updateDoc(roomRef, { status: 'finished' });
 };
 
-// Init topics and characters
+// Init
 buildTopicsGrid();
 buildCharactersGrid();
+subscribeRooms();
 </script>
 </body>
 </html>
