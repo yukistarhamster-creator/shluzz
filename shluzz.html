@@ -711,7 +711,7 @@
   <p>Читайте что получилось — и смейтесь!</p>
   <div id="final-stories"></div>
   <button class="btn btn-primary" onclick="downloadStories()">Скачать истории</button>
-  <button class="btn btn-secondary" onclick="showScreen('screen-home')">Играть снова</button>
+  <button class="btn btn-secondary" onclick="resetAndGoHome()">Играть снова</button>
 </div>
 
 <!-- SKIP WORD MODAL -->
@@ -1293,6 +1293,21 @@ window.downloadStories = function() {
   a.href = URL.createObjectURL(blob);
   a.download = 'shluzz-stories.txt';
   a.click();
+};
+
+window.resetAndGoHome = function() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  myId = '';
+  roomId = '';
+  isCreator = false;
+  gameData = null;
+  skippedWords = [];
+  selectedTopic = 'none';
+  selectedCharacter = 'none';
+  document.getElementById('player-name-input').value = myName; // keep name
+  document.getElementById('home-error').textContent = '';
+  document.getElementById('join-form').style.display = 'none';
+  showScreen('screen-home');
 };
 
 window.confirmFinishEarly = async function() {
