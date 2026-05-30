@@ -1129,8 +1129,8 @@ function handleGameState(data) {
     renderLobbyPlayers(players);
     const max = data.maxPlayers || 2;
     const isFull = players.length >= max;
-    // Autostart when full - only creator triggers it
-    if (isFull && isCreator) {
+    // Autostart when full - first player triggers it
+    if (isFull && players[0]?.id === myId) {
       const roomRef = doc(db, 'rooms', roomId);
       updateDoc(roomRef, { status: 'writing', currentTurn: 1, readyForTurn: [] });
       return;
