@@ -1066,18 +1066,24 @@ function buildCharactersGrid() {
 }
 
 window.createRoom = async function() {
+  if (!myName || !myId) {
+    showToast('Ошибка — вернись на главный экран');
+    showScreen('screen-home');
+    return;
+  }
+
   roomId = genId(5);
   const roomRef = doc(db, 'rooms', roomId);
 
   const turns = parseInt(document.getElementById('turns-range').value);
 
-  let finalTopic = selectedTopic === 'none' ? '🚫 Без темы' :
+  let finalTopic = (!selectedTopic || selectedTopic === 'none') ? '🚫 Без темы' :
                    selectedTopic === 'custom' ? (document.getElementById('custom-topic-input').value.trim() || 'Своя тема') :
-                   selectedTopic || '🚫 Без темы';
+                   selectedTopic;
 
-  let finalCharacter = selectedCharacter === 'none' ? null :
+  let finalCharacter = (!selectedCharacter || selectedCharacter === 'none') ? null :
                        selectedCharacter === 'custom' ? (document.getElementById('custom-character-input').value.trim() || null) :
-                       selectedCharacter || null;
+                       selectedCharacter;
 
   await setDoc(roomRef, {
     status: 'lobby',
@@ -1094,7 +1100,6 @@ window.createRoom = async function() {
     createdAt: serverTimestamp()
   });
 
-  document.getElementById('lobby-code').textContent = roomId;
   subscribeRoom();
   showScreen('screen-lobby');
 };
