@@ -884,9 +884,9 @@ function subscribeRooms() {
     const now = Date.now();
     snapshot.forEach(d => {
       const data = d.data();
-      // Auto-delete rooms older than 2 hours
-      const createdAt = data.createdAt?.toMillis?.() || 0;
-      if (now - createdAt > 2 * 60 * 60 * 1000) {
+      const createdAt = data.createdAt?.toMillis?.() || now;
+      // Only delete if older than 2 hours AND createdAt is set
+      if (data.createdAt && now - createdAt > 2 * 60 * 60 * 1000) {
         updateDoc(doc(db, 'rooms', d.id), { status: 'expired' });
       } else {
         rooms.push({ id: d.id, ...data });
