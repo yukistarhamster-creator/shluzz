@@ -584,20 +584,31 @@
 <div class="screen" id="screen-setup">
   <div class="logo">SHLÜZZ</div>
   <h2>Настройка шлюза</h2>
-  <p>Ты создаёшь комнату. Выбери тему и количество ходов.</p>
+  <p>Ты создаёшь комнату. Выбери тему, персонажа и количество ходов.</p>
 
   <div class="card">
     <div class="card-title">Тема игры</div>
     <div class="topics-grid" id="topics-grid"></div>
+    <div id="custom-topic-row" style="display:none;margin-top:10px;">
+      <input type="text" id="custom-topic-input" placeholder="Напиши свою тему…" maxlength="50">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Персонаж истории <span style="color:var(--muted);font-size:10px;font-family:Raleway">(необязательно)</span></div>
+    <div class="topics-grid" id="characters-grid"></div>
+    <div id="custom-character-row" style="display:none;margin-top:10px;">
+      <input type="text" id="custom-character-input" placeholder="Напиши своего персонажа…" maxlength="50">
+    </div>
   </div>
 
   <div class="card">
     <div class="card-title">Количество ходов</div>
     <div class="range-row">
-      <span style="font-size:12px;color:var(--muted)">5</span>
-      <input type="range" id="turns-range" min="5" max="15" value="7" oninput="document.getElementById('turns-val').textContent=this.value">
+      <span style="font-size:12px;color:var(--muted)">3</span>
+      <input type="range" id="turns-range" min="3" max="15" value="5" oninput="document.getElementById('turns-val').textContent=this.value">
       <span style="font-size:12px;color:var(--muted)">15</span>
-      <div class="range-val" id="turns-val">7</div>
+      <div class="range-val" id="turns-val">5</div>
     </div>
   </div>
 
@@ -634,6 +645,14 @@
     <div class="status-text" id="write-status">Ход 1</div>
   </div>
 
+  <div class="progress-label">
+    <span id="write-progress-text">Ход 1 из 5</span>
+    <span id="write-topic-label" style="color:var(--accent);font-size:11px;"></span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="write-progress-fill" style="width:20%"></div>
+  </div>
+
   <h2>Пиши историю</h2>
   <p>Придумай историю, пропуская некоторые слова. Нажми кнопку ниже чтобы вставить пропуск.</p>
 
@@ -645,6 +664,7 @@
   </div>
 
   <button class="btn btn-primary" onclick="submitStory()" id="story-submit-btn">Готово →</button>
+  <button class="btn btn-danger" onclick="confirmFinishEarly()" id="finish-early-btn" style="display:none">Завершить игру раньше</button>
 </div>
 
 <!-- SCREEN: Waiting -->
@@ -741,9 +761,20 @@ let currentStoryText = '';
 const TOPICS = [
   '🌙 Магический лес', '🚀 Космос', '🏙️ Большой город',
   '🐉 Драконы и маги', '🕵️ Детектив', '🎪 Цирк',
-  '🍕 Кулинария', '⏰ Машина времени'
+  '🍕 Кулинария', '⏰ Машина времени', '🏝️ Необитаемый остров',
+  '👻 Мистика и ужасы', '💼 Офисные будни', '🎬 Голливуд'
 ];
-let selectedTopic = TOPICS[0];
+
+const CHARACTERS = [
+  '🧙 Волшебник', '🕵️ Детектив', '👩‍🚀 Космонавт',
+  '🤡 Клоун', '👑 Король', '🧟 Зомби',
+  '🦸 Супергерой', '🧛 Вампир', '👩‍🍳 Повар', '🤖 Робот'
+];
+
+let selectedTopic = null; // null = без темы
+let selectedCharacter = null; // null = без персонажа
+let customTopic = '';
+let customCharacter = '';
 
 // ——— UTILS ———
 function genId(len = 6) {
@@ -778,7 +809,10 @@ window.goCreate = function() {
   myName = name;
   myId = genPlayerId();
   isCreator = true;
+  selectedTopic = 'none';
+  selectedCharacter = 'none';
   buildTopicsGrid();
+  buildCharactersGrid();
   showScreen('screen-setup');
 };
 
@@ -813,16 +847,79 @@ window.joinRoom = async function() {
 function buildTopicsGrid() {
   const grid = document.getElementById('topics-grid');
   grid.innerHTML = '';
+
+  // No topic option
+  const noBtn = document.createElement('button');
+  noBtn.className = 'topic-btn' + (selectedTopic === 'none' ? ' selected' : '');
+  noBtn.textContent = '🚫 Без темы';
+  noBtn.onclick = () => {
+    selectedTopic = 'none';
+    document.getElementById('custom-topic-row').style.display = 'none';
+    buildTopicsGrid();
+  };
+  grid.appendChild(noBtn);
+
   TOPICS.forEach(t => {
     const btn = document.createElement('button');
     btn.className = 'topic-btn' + (t === selectedTopic ? ' selected' : '');
     btn.textContent = t;
     btn.onclick = () => {
       selectedTopic = t;
+      document.getElementById('custom-topic-row').style.display = 'none';
       buildTopicsGrid();
     };
     grid.appendChild(btn);
   });
+
+  // Custom topic option
+  const customBtn = document.createElement('button');
+  customBtn.className = 'topic-btn' + (selectedTopic === 'custom' ? ' selected' : '');
+  customBtn.textContent = '✏️ Своя тема';
+  customBtn.onclick = () => {
+    selectedTopic = 'custom';
+    document.getElementById('custom-topic-row').style.display = 'block';
+    buildTopicsGrid();
+  };
+  grid.appendChild(customBtn);
+}
+
+function buildCharactersGrid() {
+  const grid = document.getElementById('characters-grid');
+  grid.innerHTML = '';
+
+  // No character option
+  const noBtn = document.createElement('button');
+  noBtn.className = 'topic-btn' + (selectedCharacter === 'none' ? ' selected' : '');
+  noBtn.textContent = '🚫 Без персонажа';
+  noBtn.onclick = () => {
+    selectedCharacter = 'none';
+    document.getElementById('custom-character-row').style.display = 'none';
+    buildCharactersGrid();
+  };
+  grid.appendChild(noBtn);
+
+  CHARACTERS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn' + (c === selectedCharacter ? ' selected' : '');
+    btn.textContent = c;
+    btn.onclick = () => {
+      selectedCharacter = c;
+      document.getElementById('custom-character-row').style.display = 'none';
+      buildCharactersGrid();
+    };
+    grid.appendChild(btn);
+  });
+
+  // Custom character option
+  const customBtn = document.createElement('button');
+  customBtn.className = 'topic-btn' + (selectedCharacter === 'custom' ? ' selected' : '');
+  customBtn.textContent = '✏️ Свой персонаж';
+  customBtn.onclick = () => {
+    selectedCharacter = 'custom';
+    document.getElementById('custom-character-row').style.display = 'block';
+    buildCharactersGrid();
+  };
+  grid.appendChild(customBtn);
 }
 
 window.createRoom = async function() {
@@ -831,9 +928,18 @@ window.createRoom = async function() {
 
   const turns = parseInt(document.getElementById('turns-range').value);
 
+  let finalTopic = selectedTopic === 'none' ? '🚫 Без темы' :
+                   selectedTopic === 'custom' ? (document.getElementById('custom-topic-input').value.trim() || 'Своя тема') :
+                   selectedTopic || '🚫 Без темы';
+
+  let finalCharacter = selectedCharacter === 'none' ? null :
+                       selectedCharacter === 'custom' ? (document.getElementById('custom-character-input').value.trim() || null) :
+                       selectedCharacter || null;
+
   await setDoc(roomRef, {
     status: 'lobby',
-    topic: selectedTopic,
+    topic: finalTopic,
+    character: finalCharacter,
     maxTurns: turns,
     currentTurn: 0,
     players: [{ id: myId, name: myName }],
@@ -887,16 +993,35 @@ function handleGameState(data) {
   if (data.status === 'writing') {
     const ready = data.readyForTurn || [];
     if (ready.includes(myId)) {
-      // Show waiting
       renderWaiting(players, ready, 'waiting-list');
       showScreen('screen-waiting');
     } else {
-      document.getElementById('write-status').textContent = `Ход ${data.currentTurn} из ${data.maxTurns} · ${data.topic}`;
+      const turn = data.currentTurn;
+      const max = data.maxTurns;
+      document.getElementById('write-status').textContent = `Ход ${turn} из ${max}`;
+      document.getElementById('write-progress-text').textContent = `Ход ${turn} из ${max}`;
+      document.getElementById('write-progress-fill').style.width = `${(turn/max)*100}%`;
+
+      // Topic/character hint
+      let hint = data.topic && data.topic !== '🚫 Без темы' ? data.topic : '';
+      if (data.character) hint += (hint ? ' · ' : '') + data.character;
+      document.getElementById('write-topic-label').textContent = hint;
+
+      // Show finish early button after turn 2
+      document.getElementById('finish-early-btn').style.display = turn > 2 ? 'block' : 'none';
+
       if (document.getElementById('screen-write').classList.contains('active')) return;
       skippedWords = [];
       document.getElementById('story-textarea').value = '';
       document.getElementById('skipped-words-display').innerHTML = '';
       updateCharCount();
+
+      // Placeholder hint
+      let placeholder = 'Однажды…';
+      if (data.topic && data.topic !== '🚫 Без темы') placeholder = `История про ${data.topic}…`;
+      if (data.character) placeholder = `История про ${data.character}…`;
+      document.getElementById('story-textarea').placeholder = placeholder;
+
       showScreen('screen-write');
     }
     return;
@@ -1170,8 +1295,15 @@ window.downloadStories = function() {
   a.click();
 };
 
-// Init topics
+window.confirmFinishEarly = async function() {
+  if (!confirm('Завершить игру прямо сейчас? Все получат истории с текущими ходами.')) return;
+  const roomRef = doc(db, 'rooms', roomId);
+  await updateDoc(roomRef, { status: 'finished' });
+};
+
+// Init topics and characters
 buildTopicsGrid();
+buildCharactersGrid();
 </script>
 </body>
 </html>
