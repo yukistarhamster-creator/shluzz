@@ -160,6 +160,9 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
     <div id="lobby-players"></div>
   </div>
   <p id="lobby-status" style="text-align:center;font-size:13px;color:var(--muted)">Ждём игроков…</p>
+  <div id="lobby-cancel-btn" style="display:none;margin-top:8px">
+    <button class="btn btn-danger" onclick="cancelRoom()">Закрыть шлюз</button>
+  </div>
 </div>
 
 <!-- WRITE -->
@@ -445,7 +448,16 @@ function renderLobby(players, max) {
   ).join('');
   document.getElementById('lobby-status').textContent =
     players.length>=max ? 'Запускаем игру…' : `Ждём игроков… ${players.length}/${max}`;
+  // Show cancel button only for host
+  document.getElementById('lobby-cancel-btn').style.display =
+    players[0]?.id===myId ? 'block' : 'none';
 }
+
+window.cancelRoom = async () => {
+  if (!confirm('Закрыть шлюз? Все игроки будут отключены.')) return;
+  await updateDoc(doc(db,'rooms',roomId), {status:'cancelled'});
+  goHome();
+};
 
 // ═══ WRITE ═══
 function setupWriteScreen(d) {
