@@ -333,7 +333,10 @@ window.goHome = () => {
 
 // ═══ JOIN ROOM ═══
 window.joinRoom = async (rid) => {
-  if (!myId) { toast('Сначала войди!'); return; }
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { toast('Сначала введи имя!'); return; }
+  myName = name;
+  if (!myId) myId = Math.random().toString(36).slice(2,10);
   roomId = rid;
 
   const snap = await getDoc(doc(db,'rooms',rid));
