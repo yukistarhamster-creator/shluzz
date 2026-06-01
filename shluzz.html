@@ -94,35 +94,16 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 </head>
 <body>
 
-<!-- AUTH -->
-<div class="screen active" id="s-auth">
-  <div class="spacer"></div>
-  <div style="text-align:center;margin-bottom:48px">
-    <div class="logo" style="text-align:center">SHLÜZZ</div>
-    <div class="logo-sub" style="text-align:center">игра слов и воображения</div>
-  </div>
-  <p class="sub" style="text-align:center;margin-bottom:24px">Войди чтобы играть — это бесплатно и займёт секунду</p>
-  <button class="btn" id="btn-google-login" onclick="signInWithGoogle()" style="background:white;color:#333;display:flex;align-items:center;justify-content:center;gap:12px;font-family:Raleway,sans-serif;font-size:15px;font-weight:700;letter-spacing:0">
-    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    Войти через Google
-  </button>
-  <div class="spacer"></div>
-</div>
-
 <!-- HOME -->
-<div class="screen" id="s-home">
+<div class="screen active" id="s-home">
   <div class="logo">SHLÜZZ</div>
   <div class="logo-sub">игра слов и воображения</div>
-  <div class="card" style="display:flex;align-items:center;gap:12px">
-    <div id="user-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--accent);color:#0a0a0f;font-family:Unbounded,sans-serif;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
-    <div style="flex:1">
-      <div id="user-name" style="font-family:Unbounded,sans-serif;font-size:14px;font-weight:700"></div>
-      <div id="user-email" style="font-size:11px;color:var(--muted)"></div>
-    </div>
-    <button onclick="signOut()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:6px 10px;border-radius:8px;cursor:pointer;font-family:Raleway,sans-serif">Выйти</button>
+  <div class="card">
+    <div class="card-title">Твоё имя</div>
+    <input id="inp-name" type="text" placeholder="Введи своё имя" maxlength="20" oninput="onNameChange()">
+    <div class="error-msg" id="home-err"></div>
   </div>
-  <div class="error-msg" id="home-err"></div>
-  <button class="btn btn-primary" onclick="goSetup()">✦ Создать шлюз</button>
+  <button class="btn btn-primary" id="btn-create" onclick="goSetup()" disabled>✦ Создать шлюз</button>
   <div class="card">
     <div class="card-title">Открытые шлюзы</div>
     <div id="rooms-list"><div class="room-empty">Загрузка…</div></div>
@@ -261,7 +242,6 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
@@ -273,8 +253,6 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
 // ═══ STATE ═══
 let myName = '', myId = '', roomId = '';
@@ -293,40 +271,20 @@ function roomCode() { return Math.random().toString(36).slice(2,7).toUpperCase()
 function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
 function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-// ═══ AUTH ═══
-window.signInWithGoogle = async () => {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch(e) {
-    toast('Ошибка входа — попробуй ещё раз');
-  }
+// ═══ HOME ═══
+window.onNameChange = () => {
+  const name = document.getElementById('inp-name').value.trim();
+  document.getElementById('btn-create').disabled = !name;
+  document.getElementById('home-err').textContent = '';
 };
 
-window.signOut = async () => {
+window.goHome = () => {
   if (unsubRoom) { unsubRoom(); unsubRoom=null; }
-  if (unsubRooms) { unsubRooms(); unsubRooms=null; }
-  await fbSignOut(auth);
+  myId=''; roomId=''; gameData=null; skips=[];
+  selectedTopic=null; selectedChar=null; maxPlayers=2;
+  document.getElementById('inp-name').value = myName;
+  show('s-home');
 };
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    myId = user.uid;
-    myName = user.displayName || user.email.split('@')[0];
-    // Update UI
-    document.getElementById('user-name').textContent = myName;
-    document.getElementById('user-email').textContent = user.email;
-    document.getElementById('user-avatar').textContent = myName[0].toUpperCase();
-    if (user.photoURL) {
-      document.getElementById('user-avatar').innerHTML = `<img src="${user.photoURL}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`;
-    }
-    show('s-home');
-    startRoomsListener();
-  } else {
-    myId=''; myName='';
-    if (unsubRooms) { unsubRooms(); unsubRooms=null; }
-    show('s-auth');
-  }
-});
 
 function startRoomsListener() {
   if (unsubRooms) unsubRooms();
@@ -357,6 +315,10 @@ function renderRooms(rooms) {
 }
 
 window.goSetup = () => {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { document.getElementById('home-err').textContent='Введи имя!'; return; }
+  myName = name;
+  myId = Math.random().toString(36).slice(2,10);
   selectedTopic=null; selectedChar=null; maxPlayers=2;
   buildTopics(); buildChars();
   show('s-setup');
@@ -674,7 +636,7 @@ window.downloadStories = () => {
 };
 
 // ═══ INIT ═══
-// Auth state listener handles everything on load
+startRoomsListener();
 </script>
 </body>
 </html>
