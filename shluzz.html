@@ -587,114 +587,102 @@ function setupAnswerScreen(d) {
   const players=d.players||[];
   const myIdx=players.findIndex(p=>p.id===myId);
   const list=document.getElementById('questions-list');
+  const btn=document.getElementById('btn-answers-done');
 
-  // Ищем историю от предыдущего игрока — если его нет, берём следующего по кругу
-  let story = null;
-  let storyKey = null;
-  for (let offset = 1; offset < players.length; offset++) {
-    const idx = (myIdx - offset + players.length) % players.length;
-    const key = `${players[idx].id}_${d.currentTurn}`;
+  // Ищем историю — сначала от предыдущего, если нет — ищем дальше по кругу
+  let story=null, storyKey=null;
+  for (let offset=1; offset<players.length; offset++) {
+    const idx=(myIdx-offset+players.length)%players.length;
+    const key=`${players[idx].id}_${d.currentTurn}`;
     if (d.stories?.[key]?.questions?.length) {
-      story = d.stories[key];
-      storyKey = key;
-      break;
+      story=d.stories[key]; storyKey=key; break;
     }
   }
 
   if (!story?.questions?.length) {
-    // История не найдена — игрок вылетел до написания
-    // Автоматически засчитываем как "ответил" и ждём остальных
-    list.innerHTML='<p style="color:var(--muted);font-style:italic">Игрок вылетел и не написал историю.<br>Ход засчитан автоматически.</p>';
-    document.getElementById('btn-answers-done').disabled=false;
-    // Сразу помечаем себя как готового
-    setTimeout(async () => {
-      await updateDoc(doc(db,'rooms',roomId), { readyForAnswers: arrayUnion(myId) });
-    }, 1500);
+    // Игрок вылетел до написания истории — автоматически засчитываем
+    list.innerHTML='<p style="color:var(--muted);font-style:italic;line-height:1.6">Игрок вылетел и не написал историю.<br>Ход засчитан автоматически.</p>';
+    btn.disabled=true;
+    setTimeout(async()=>{
+      await updateDoc(doc(db,'rooms',roomId),{readyForAnswers:arrayUnion(myId)});
+    },1500);
     return;
   }
 
+  btn.dataset.storyKey=storyKey;
   list.innerHTML=story.questions.map((q,i)=>`
     <div class="q-item">
       <div class="q-label">Вопрос ${i+1}</div>
       <div class="q-text">${q}</div>
       <input type="text" id="ans-${i}" placeholder="Твой ответ…" maxlength="100">
     </div>`).join('');
-  document.getElementById('btn-answers-done').disabled=false;
-
-  // Сохраняем storyKey для submitAnswers
-  document.getElementById('btn-answers-done').dataset.storyKey = storyKey;
+  btn.disabled=false;
 }
 
 window.submitAnswers = async () => {
-  document.getElementById('btn-answers-done').disabled=true;
+  const btn=document.getElementById('btn-answers-done');
+  btn.disabled=true;
   const d=gameData, players=d.players||[];
-  const myIdx=players.findIndex(p=>p.id===myId);
-  const prevIdx=(myIdx-1+players.length)%players.length;
-  const storyKey=`${players[prevIdx].id}_${d.currentTurn}`;
+  const storyKey=btn.dataset.storyKey;
+
+  // Если нет storyKey — уже засчитано автоматически
+  if (!storyKey) return;
+
   const story=d.stories?.[storyKey];
   if (!story) return;
 
   const answers=story.questions.map((_,i)=>document.getElementById(`ans-${i}`)?.value.trim()||'???');
-  await updateDoc(doc(db,'rooms',roomId), {
-    [`answers.${storyKey}`]: answers,
-    readyForAnswers: arrayUnion(myId)
+  await updateDoc(doc(db,'rooms',roomId),{
+    [`answers.${storyKey}`]:answers,
+    readyForAnswers:arrayUnion(myId)
   });
 
   setTimeout(async()=>{
     const snap=await getDoc(doc(db,'rooms',roomId));
     const d2=snap.data();
-    if ((d2.readyForAnswers||[]).length >= d2.players.length && d2.status==='answering') {
-      if (d2.currentTurn >= d2.maxTurns) {
-        await updateDoc(doc(db,'rooms',roomId), {status:'finished'});
+    if ((d2.readyForAnswers||[]).length>=d2.players.length && d2.status==='answering') {
+      if (d2.currentTurn>=d2.maxTurns) {
+        await updateDoc(doc(db,'rooms',roomId),{status:'finished'});
       } else {
-        await updateDoc(doc(db,'rooms',roomId), {
-          status:'writing', currentTurn:d2.currentTurn+1, readyForTurn:[], readyForAnswers:[]
+        await updateDoc(doc(db,'rooms',roomId),{
+          status:'writing',currentTurn:d2.currentTurn+1,readyForTurn:[],readyForAnswers:[]
         });
       }
     }
-  }, 600);
+  },600);
 };
 
 // ═══ WAIT TIMER ═══
-const WAIT_SECONDS = 180; // 3 минуты обратного отсчёта
-const WAIT_DELAY_MS = 60000; // 60 секунд задержки перед показом таймера
-
+const WAIT_SECONDS = 180;
+const WAIT_DELAY_MS = 60000;
 let waitDelayTimeout = null;
 
 function startWaitTimer(type, onExpire) {
   clearWaitTimer();
   let remaining = WAIT_SECONDS;
-  const boxId = type === 'stories' ? 'timer-stories' : 'timer-answers';
-  const countId = type === 'stories' ? 'timer-stories-count' : 'timer-answers-count';
+  const boxId = type==='stories' ? 'timer-stories' : 'timer-answers';
+  const countId = type==='stories' ? 'timer-stories-count' : 'timer-answers-count';
+  function fmt(s) { const m=Math.floor(s/60),sec=s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
 
-  function fmt(s) {
-    const m = Math.floor(s/60), sec = s%60;
-    return `${m}:${sec.toString().padStart(2,'0')}`;
-  }
-
-  // Сначала ждём 60 секунд — даём игрокам время, потом показываем таймер
-  waitDelayTimeout = setTimeout(() => {
+  // Ждём 60 секунд прежде чем показать таймер
+  waitDelayTimeout = setTimeout(()=>{
     waitDelayTimeout = null;
-    document.getElementById(boxId).classList.add('visible');
-    document.getElementById(countId).textContent = fmt(remaining);
-
-    waitTimerInterval = setInterval(() => {
+    const box=document.getElementById(boxId);
+    if (box) { box.classList.add('visible'); document.getElementById(countId).textContent=fmt(remaining); }
+    waitTimerInterval = setInterval(()=>{
       remaining--;
-      const el = document.getElementById(countId);
-      if (el) el.textContent = fmt(remaining);
-      if (remaining <= 0) {
-        clearWaitTimer();
-        onExpire();
-      }
-    }, 1000);
+      const el=document.getElementById(countId);
+      if (el) el.textContent=fmt(remaining);
+      if (remaining<=0) { clearWaitTimer(); onExpire(); }
+    },1000);
   }, WAIT_DELAY_MS);
 }
 
 function clearWaitTimer() {
-  if (waitDelayTimeout) { clearTimeout(waitDelayTimeout); waitDelayTimeout = null; }
-  if (waitTimerInterval) { clearInterval(waitTimerInterval); waitTimerInterval = null; }
-  ['timer-stories','timer-answers'].forEach(id => {
-    const el = document.getElementById(id);
+  if (waitDelayTimeout) { clearTimeout(waitDelayTimeout); waitDelayTimeout=null; }
+  if (waitTimerInterval) { clearInterval(waitTimerInterval); waitTimerInterval=null; }
+  ['timer-stories','timer-answers'].forEach(id=>{
+    const el=document.getElementById(id);
     if (el) el.classList.remove('visible');
   });
 }
