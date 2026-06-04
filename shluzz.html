@@ -90,6 +90,11 @@ h2 { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; ma
 p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 1.6; }
 .spacer { flex: 1; }
 .hint { font-size: 11px; color: var(--accent); font-family: 'Unbounded', sans-serif; letter-spacing: 1px; }
+.timer-box { background: rgba(255,107,107,0.08); border: 1px solid var(--accent2); border-radius: 12px; padding: 14px 18px; margin-top: 16px; display: none; text-align: center; }
+.timer-box.visible { display: block; }
+.timer-label { font-size: 11px; color: var(--accent2); font-family: 'Unbounded', sans-serif; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.timer-count { font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent2); }
+.timer-sub { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
 </style>
 </head>
 <body>
@@ -192,6 +197,11 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
   <h2>Ждём остальных…</h2>
   <p class="sub">Все пишут истории. Скоро придут вопросы!</p>
   <div id="wait-stories-list"></div>
+  <div class="timer-box" id="timer-stories">
+    <div class="timer-label">⏳ Кто-то завис</div>
+    <div class="timer-count" id="timer-stories-count">3:00</div>
+    <div class="timer-sub">Игра продолжится автоматически</div>
+  </div>
 </div>
 
 <!-- ANSWER -->
@@ -212,6 +222,11 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
   <h2>Ждём остальных…</h2>
   <p class="sub">Все отвечают на вопросы.</p>
   <div id="wait-answers-list"></div>
+  <div class="timer-box" id="timer-answers">
+    <div class="timer-label">⏳ Кто-то завис</div>
+    <div class="timer-count" id="timer-answers-count">3:00</div>
+    <div class="timer-sub">Игра продолжится автоматически</div>
+  </div>
 </div>
 
 <!-- FINAL -->
@@ -262,6 +277,7 @@ let maxPlayers = 2;
 let selectedTopic = null;
 let selectedChar = null;
 let unsubRoom = null, unsubRooms = null;
+let waitTimer = null, waitTimerInterval = null;
 
 const TOPICS = ['🚫 Без темы','🌙 Магический лес','🚀 Космос','🏙️ Большой город','🐉 Драконы и маги','🕵️ Детектив','🎪 Цирк','🍕 Кулинария','⏰ Машина времени','🏝️ Необитаемый остров','👻 Мистика','🏢 Офис','🎬 Голливуд','✏️ Своя тема'];
 const CHARS = ['🚫 Без персонажа','🧙 Волшебник','🕵️ Детектив','👩‍🚀 Космонавт','🤡 Клоун','👑 Король','🧟 Зомби','🦸 Супергерой','🧛 Вампир','👩‍🍳 Повар','🤖 Робот','✏️ Свой персонаж'];
@@ -280,6 +296,7 @@ window.onNameChange = () => {
 
 window.goHome = () => {
   if (unsubRoom) { unsubRoom(); unsubRoom=null; }
+  clearWaitTimer();
   myId=''; roomId=''; gameData=null; skips=[];
   selectedTopic=null; selectedChar=null; maxPlayers=2;
   document.getElementById('inp-name').value = myName;
@@ -326,6 +343,7 @@ window.goSetup = () => {
 
 window.goHome = () => {
   if (unsubRoom) { unsubRoom(); unsubRoom=null; }
+  clearWaitTimer();
   roomId=''; gameData=null; skips=[];
   selectedTopic=null; selectedChar=null; maxPlayers=2;
   show('s-home');
@@ -424,6 +442,7 @@ function handleState(d) {
   }
 
   if (d.status==='writing') {
+    clearWaitTimer();
     if ((d.readyForTurn||[]).includes(myId)) {
       renderWait(players, d.readyForTurn||[], 'wait-stories-list');
       show('s-wait-stories');
@@ -593,6 +612,42 @@ window.submitAnswers = async () => {
   }, 600);
 };
 
+// ═══ WAIT TIMER ═══
+const WAIT_SECONDS = 180; // 3 минуты
+
+function startWaitTimer(type, onExpire) {
+  clearWaitTimer();
+  let remaining = WAIT_SECONDS;
+  const boxId = type === 'stories' ? 'timer-stories' : 'timer-answers';
+  const countId = type === 'stories' ? 'timer-stories-count' : 'timer-answers-count';
+
+  function fmt(s) {
+    const m = Math.floor(s/60), sec = s%60;
+    return `${m}:${sec.toString().padStart(2,'0')}`;
+  }
+
+  document.getElementById(boxId).classList.add('visible');
+  document.getElementById(countId).textContent = fmt(remaining);
+
+  waitTimerInterval = setInterval(() => {
+    remaining--;
+    const el = document.getElementById(countId);
+    if (el) el.textContent = fmt(remaining);
+    if (remaining <= 0) {
+      clearWaitTimer();
+      onExpire();
+    }
+  }, 1000);
+}
+
+function clearWaitTimer() {
+  if (waitTimerInterval) { clearInterval(waitTimerInterval); waitTimerInterval = null; }
+  ['timer-stories','timer-answers'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('visible');
+  });
+}
+
 // ═══ WAIT ═══
 function renderWait(players, ready, elId) {
   document.getElementById(elId).innerHTML=players.map(p=>`
@@ -600,6 +655,50 @@ function renderWait(players, ready, elId) {
       <span>${ready.includes(p.id)?'✓':'…'}</span>
       <span>${p.name}</span>
     </div>`).join('');
+
+  // Запускаем таймер если не все готовы, но хотя бы один готов
+  const allReady = players.every(p => ready.includes(p.id));
+  const someReady = players.some(p => ready.includes(p.id));
+  const isHost = (players[0]?.id === myId);
+
+  if (!allReady && someReady && isHost) {
+    const type = elId === 'wait-stories-list' ? 'stories' : 'answers';
+    // Не перезапускаем таймер если уже идёт
+    if (!waitTimerInterval) {
+      startWaitTimer(type, async () => {
+        // Таймер истёк — хост принудительно двигает игру вперёд
+        const snap = await getDoc(doc(db,'rooms',roomId));
+        const d2 = snap.data();
+        if (!d2) return;
+
+        if (d2.status === 'writing') {
+          // Добавляем всех незавершивших как "готовых" и двигаемся дальше
+          const missing = d2.players.filter(p => !(d2.readyForTurn||[]).includes(p.id));
+          const fakeReady = [...(d2.readyForTurn||[]), ...missing.map(p=>p.id)];
+          await updateDoc(doc(db,'rooms',roomId), {
+            readyForTurn: fakeReady,
+            status: 'answering',
+            readyForAnswers: []
+          });
+        } else if (d2.status === 'answering') {
+          const missing = d2.players.filter(p => !(d2.readyForAnswers||[]).includes(p.id));
+          const fakeReady = [...(d2.readyForAnswers||[]), ...missing.map(p=>p.id)];
+          if (d2.currentTurn >= d2.maxTurns) {
+            await updateDoc(doc(db,'rooms',roomId), { status:'finished' });
+          } else {
+            await updateDoc(doc(db,'rooms',roomId), {
+              readyForAnswers: fakeReady,
+              status: 'writing',
+              currentTurn: d2.currentTurn + 1,
+              readyForTurn: []
+            });
+          }
+        }
+      });
+    }
+  } else {
+    clearWaitTimer();
+  }
 }
 
 // ═══ FINAL ═══
