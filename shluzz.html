@@ -586,11 +586,33 @@ function setupAnswerScreen(d) {
   document.getElementById('answer-status-text').textContent=`Ход ${d.currentTurn} из ${d.maxTurns}`;
   const players=d.players||[];
   const myIdx=players.findIndex(p=>p.id===myId);
-  const prevIdx=(myIdx-1+players.length)%players.length;
-  const storyKey=`${players[prevIdx].id}_${d.currentTurn}`;
-  const story=d.stories?.[storyKey];
   const list=document.getElementById('questions-list');
-  if (!story?.questions?.length) { list.innerHTML='<p style="color:var(--muted)">Нет вопросов</p>'; return; }
+
+  // Ищем историю от предыдущего игрока — если его нет, берём следующего по кругу
+  let story = null;
+  let storyKey = null;
+  for (let offset = 1; offset < players.length; offset++) {
+    const idx = (myIdx - offset + players.length) % players.length;
+    const key = `${players[idx].id}_${d.currentTurn}`;
+    if (d.stories?.[key]?.questions?.length) {
+      story = d.stories[key];
+      storyKey = key;
+      break;
+    }
+  }
+
+  if (!story?.questions?.length) {
+    // История не найдена — игрок вылетел до написания
+    // Автоматически засчитываем как "ответил" и ждём остальных
+    list.innerHTML='<p style="color:var(--muted);font-style:italic">Игрок вылетел и не написал историю.<br>Ход засчитан автоматически.</p>';
+    document.getElementById('btn-answers-done').disabled=false;
+    // Сразу помечаем себя как готового
+    setTimeout(async () => {
+      await updateDoc(doc(db,'rooms',roomId), { readyForAnswers: arrayUnion(myId) });
+    }, 1500);
+    return;
+  }
+
   list.innerHTML=story.questions.map((q,i)=>`
     <div class="q-item">
       <div class="q-label">Вопрос ${i+1}</div>
@@ -598,6 +620,9 @@ function setupAnswerScreen(d) {
       <input type="text" id="ans-${i}" placeholder="Твой ответ…" maxlength="100">
     </div>`).join('');
   document.getElementById('btn-answers-done').disabled=false;
+
+  // Сохраняем storyKey для submitAnswers
+  document.getElementById('btn-answers-done').dataset.storyKey = storyKey;
 }
 
 window.submitAnswers = async () => {
@@ -631,7 +656,10 @@ window.submitAnswers = async () => {
 };
 
 // ═══ WAIT TIMER ═══
-const WAIT_SECONDS = 180; // 3 минуты
+const WAIT_SECONDS = 180; // 3 минуты обратного отсчёта
+const WAIT_DELAY_MS = 60000; // 60 секунд задержки перед показом таймера
+
+let waitDelayTimeout = null;
 
 function startWaitTimer(type, onExpire) {
   clearWaitTimer();
@@ -644,21 +672,26 @@ function startWaitTimer(type, onExpire) {
     return `${m}:${sec.toString().padStart(2,'0')}`;
   }
 
-  document.getElementById(boxId).classList.add('visible');
-  document.getElementById(countId).textContent = fmt(remaining);
+  // Сначала ждём 60 секунд — даём игрокам время, потом показываем таймер
+  waitDelayTimeout = setTimeout(() => {
+    waitDelayTimeout = null;
+    document.getElementById(boxId).classList.add('visible');
+    document.getElementById(countId).textContent = fmt(remaining);
 
-  waitTimerInterval = setInterval(() => {
-    remaining--;
-    const el = document.getElementById(countId);
-    if (el) el.textContent = fmt(remaining);
-    if (remaining <= 0) {
-      clearWaitTimer();
-      onExpire();
-    }
-  }, 1000);
+    waitTimerInterval = setInterval(() => {
+      remaining--;
+      const el = document.getElementById(countId);
+      if (el) el.textContent = fmt(remaining);
+      if (remaining <= 0) {
+        clearWaitTimer();
+        onExpire();
+      }
+    }, 1000);
+  }, WAIT_DELAY_MS);
 }
 
 function clearWaitTimer() {
+  if (waitDelayTimeout) { clearTimeout(waitDelayTimeout); waitDelayTimeout = null; }
   if (waitTimerInterval) { clearInterval(waitTimerInterval); waitTimerInterval = null; }
   ['timer-stories','timer-answers'].forEach(id => {
     const el = document.getElementById(id);
