@@ -256,7 +256,7 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where, getDocs, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
@@ -311,6 +311,24 @@ function startRoomsListener() {
     snap.forEach(d => rooms.push({id:d.id,...d.data()}));
     renderRooms(rooms);
   });
+}
+
+// ═══ CLEANUP OLD ROOMS ═══
+async function cleanOldRooms() {
+  const cutoff = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000); // 24 часа назад
+  try {
+    // Чистим старые лобби
+    const lobbyQ = query(collection(db,'rooms'), where('status','==','lobby'), where('createdAt','<',cutoff));
+    const lobbySnap = await getDocs(lobbyQ);
+    lobbySnap.forEach(d => deleteDoc(doc(db,'rooms',d.id)));
+
+    // Чистим старые незавершённые игры
+    const activeQ = query(collection(db,'rooms'), where('status','in',['writing','answering']), where('createdAt','<',cutoff));
+    const activeSnap = await getDocs(activeQ);
+    activeSnap.forEach(d => deleteDoc(doc(db,'rooms',d.id)));
+  } catch(e) {
+    // Тихо — не критично если не удалось
+  }
 }
 
 function renderRooms(rooms) {
@@ -738,6 +756,7 @@ window.downloadStories = () => {
 };
 
 // ═══ INIT ═══
+cleanOldRooms();
 startRoomsListener();
 </script>
 </body>
