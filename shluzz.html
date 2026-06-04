@@ -95,6 +95,13 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 .timer-label { font-size: 11px; color: var(--accent2); font-family: 'Unbounded', sans-serif; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
 .timer-count { font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent2); }
 .timer-sub { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+.btn-google { background: #fff; color: #1a1a1a; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; }
+.btn-google img { width: 18px; height: 18px; }
+.user-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 8px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+.user-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #0a0a0f; font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.user-name { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; flex: 1; }
+.btn-signout { background: transparent; border: none; color: var(--muted); font-size: 12px; cursor: pointer; font-family: 'Raleway', sans-serif; padding: 4px 8px; }
 </style>
 </head>
 <body>
@@ -103,12 +110,27 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 <div class="screen active" id="s-home">
   <div class="logo">SHLÜZZ</div>
   <div class="logo-sub">игра слов и воображения</div>
-  <div class="card">
-    <div class="card-title">Твоё имя</div>
-    <input id="inp-name" type="text" placeholder="Введи своё имя" maxlength="20" oninput="onNameChange()">
+
+  <!-- Авторизован -->
+  <div id="auth-user" style="display:none">
+    <div class="user-bar">
+      <img id="user-photo" class="user-avatar" src="" alt="" onerror="this.style.display='none';document.getElementById('user-photo-placeholder').style.display='flex'">
+      <div id="user-photo-placeholder" class="user-avatar-placeholder" style="display:none"></div>
+      <div class="user-name" id="user-display-name"></div>
+      <button class="btn-signout" onclick="signOut()">Выйти</button>
+    </div>
+    <button class="btn btn-primary" id="btn-create" onclick="goSetup()">✦ Создать шлюз</button>
+  </div>
+
+  <!-- Не авторизован -->
+  <div id="auth-guest" style="display:none">
+    <button class="btn btn-google" onclick="signInGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+      Войти через Google
+    </button>
     <div class="error-msg" id="home-err"></div>
   </div>
-  <button class="btn btn-primary" id="btn-create" onclick="goSetup()" disabled>✦ Создать шлюз</button>
+
   <div class="card">
     <div class="card-title">Открытые шлюзы</div>
     <div id="rooms-list"><div class="room-empty">Загрузка…</div></div>
@@ -257,6 +279,7 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where, getDocs, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
@@ -268,6 +291,8 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 // ═══ STATE ═══
 let myName = '', myId = '', roomId = '';
@@ -278,6 +303,7 @@ let selectedTopic = null;
 let selectedChar = null;
 let unsubRoom = null, unsubRooms = null;
 let waitTimer = null, waitTimerInterval = null;
+let currentUser = null;
 
 const TOPICS = ['🚫 Без темы','🌙 Магический лес','🚀 Космос','🏙️ Большой город','🐉 Драконы и маги','🕵️ Детектив','🎪 Цирк','🍕 Кулинария','⏰ Машина времени','🏝️ Необитаемый остров','👻 Мистика','🏢 Офис','🎬 Голливуд','✏️ Своя тема'];
 const CHARS = ['🚫 Без персонажа','🧙 Волшебник','🕵️ Детектив','👩‍🚀 Космонавт','🤡 Клоун','👑 Король','🧟 Зомби','🦸 Супергерой','🧛 Вампир','👩‍🍳 Повар','🤖 Робот','✏️ Свой персонаж'];
@@ -287,19 +313,57 @@ function roomCode() { return Math.random().toString(36).slice(2,7).toUpperCase()
 function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
 function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-// ═══ HOME ═══
-window.onNameChange = () => {
-  const name = document.getElementById('inp-name').value.trim();
-  document.getElementById('btn-create').disabled = !name;
-  document.getElementById('home-err').textContent = '';
+// ═══ AUTH ═══
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    myId = user.uid;
+    myName = user.displayName || 'Игрок';
+    // Показываем профиль
+    document.getElementById('auth-user').style.display = 'block';
+    document.getElementById('auth-guest').style.display = 'none';
+    document.getElementById('user-display-name').textContent = myName;
+    const photo = document.getElementById('user-photo');
+    const placeholder = document.getElementById('user-photo-placeholder');
+    if (user.photoURL) {
+      photo.src = user.photoURL;
+      photo.style.display = 'block';
+      placeholder.style.display = 'none';
+    } else {
+      photo.style.display = 'none';
+      placeholder.style.display = 'flex';
+      placeholder.textContent = myName[0].toUpperCase();
+    }
+  } else {
+    myId = ''; myName = '';
+    document.getElementById('auth-user').style.display = 'none';
+    document.getElementById('auth-guest').style.display = 'block';
+  }
+});
+
+window.signInGoogle = async () => {
+  try {
+    document.getElementById('home-err').textContent = '';
+    await signInWithPopup(auth, googleProvider);
+  } catch(e) {
+    document.getElementById('home-err').textContent = 'Ошибка входа. Попробуй снова.';
+  }
+};
+
+window.signOut = async () => {
+  if (unsubRoom) { unsubRoom(); unsubRoom=null; }
+  clearWaitTimer();
+  roomId=''; gameData=null; skips=[];
+  selectedTopic=null; selectedChar=null; maxPlayers=2;
+  await fbSignOut(auth);
+  show('s-home');
 };
 
 window.goHome = () => {
   if (unsubRoom) { unsubRoom(); unsubRoom=null; }
   clearWaitTimer();
-  myId=''; roomId=''; gameData=null; skips=[];
+  roomId=''; gameData=null; skips=[];
   selectedTopic=null; selectedChar=null; maxPlayers=2;
-  document.getElementById('inp-name').value = myName;
   show('s-home');
 };
 
@@ -350,10 +414,7 @@ function renderRooms(rooms) {
 }
 
 window.goSetup = () => {
-  const name = document.getElementById('inp-name').value.trim();
-  if (!name) { document.getElementById('home-err').textContent='Введи имя!'; return; }
-  myName = name;
-  myId = Math.random().toString(36).slice(2,10);
+  if (!currentUser) { toast('Войди через Google чтобы создать шлюз'); return; }
   selectedTopic=null; selectedChar=null; maxPlayers=2;
   buildTopics(); buildChars();
   show('s-setup');
@@ -369,10 +430,7 @@ window.goHome = () => {
 
 // ═══ JOIN ROOM ═══
 window.joinRoom = async (rid) => {
-  const name = document.getElementById('inp-name').value.trim();
-  if (!name) { toast('Сначала введи имя!'); return; }
-  myName = name;
-  if (!myId) myId = Math.random().toString(36).slice(2,10);
+  if (!currentUser) { toast('Войди через Google чтобы играть'); return; }
   roomId = rid;
 
   const snap = await getDoc(doc(db,'rooms',rid));
@@ -380,10 +438,9 @@ window.joinRoom = async (rid) => {
   const d = snap.data();
   if (d.status !== 'lobby') { document.getElementById('home-err').textContent='Игра уже началась'; return; }
   if ((d.players?.length||0) >= (d.maxPlayers||2)) { document.getElementById('home-err').textContent='Шлюз заполнен'; return; }
-  // Check if already in room
   if (d.players?.find(p=>p.id===myId)) { startRoomListener(); show('s-lobby'); return; }
 
-  await updateDoc(doc(db,'rooms',rid), { players: arrayUnion({id:myId,name:myName}) });
+  await updateDoc(doc(db,'rooms',rid), { players: arrayUnion({id:myId, name:myName, photo:currentUser.photoURL||null}) });
   startRoomListener();
   show('s-lobby');
 };
@@ -426,7 +483,7 @@ window.createRoom = async () => {
     maxTurns: turns,
     maxPlayers: maxPlayers,
     currentTurn: 0,
-    players: [{id:myId,name:myName}],
+    players: [{id:myId, name:myName, photo:currentUser?.photoURL||null}],
     stories: {},
     answers: {},
     readyForTurn: [],
@@ -492,7 +549,10 @@ function handleState(d) {
 function renderLobby(players, max) {
   document.getElementById('lobby-players').innerHTML = players.map((p,i) =>
     `<div class="player-item">
-      <div class="player-avatar">${p.name[0].toUpperCase()}</div>
+      ${p.photo
+        ? `<img src="${p.photo}" class="user-avatar" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)" onerror="this.outerHTML='<div class=\'player-avatar\'>${p.name[0].toUpperCase()}</div>'">`
+        : `<div class="player-avatar">${p.name[0].toUpperCase()}</div>`
+      }
       <div>${p.name}</div>
       ${i===0?'<div class="player-badge">ХОСТ</div>':''}
     </div>`
