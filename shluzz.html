@@ -279,7 +279,7 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where, getDocs, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwiP-gAmXA",
@@ -344,14 +344,23 @@ onAuthStateChanged(auth, user => {
 window.signInGoogle = async () => {
   try {
     document.getElementById('home-err').textContent = '';
-    await signInWithRedirect(auth, googleProvider);
+    await signInWithPopup(auth, googleProvider);
   } catch(e) {
-    console.error('signInWithRedirect error:', e.code, e.message);
-    document.getElementById('home-err').textContent = `Ошибка: ${e.code || e.message}`;
+    console.error('signInWithPopup error:', e.code, e.message);
+    // Popup заблокирован — fallback на redirect
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+      } catch(e2) {
+        document.getElementById('home-err').textContent = `Ошибка: ${e2.code || e2.message}`;
+      }
+    } else {
+      document.getElementById('home-err').textContent = `Ошибка: ${e.code || e.message}`;
+    }
   }
 };
 
-// Обрабатываем возврат после редиректа
+// Обрабатываем возврат после редиректа (fallback)
 getRedirectResult(auth).then(result => {
   if (result?.user) console.log('Redirect login success:', result.user.email);
 }).catch(e => {
