@@ -279,10 +279,10 @@ p.sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; line-height: 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, serverTimestamp, collection, query, where, getDocs, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwiP-gAmXA",
+  apiKey: "AIzaSyCKewjegNHitzjuYQIyWopqLIwi2p7oFtU",
   authDomain: "shluzz-a4e22.firebaseapp.com",
   projectId: "shluzz-a4e22",
   storageBucket: "shluzz-a4e22.firebasestorage.app",
@@ -344,23 +344,14 @@ onAuthStateChanged(auth, user => {
 window.signInGoogle = async () => {
   try {
     document.getElementById('home-err').textContent = '';
-    await signInWithPopup(auth, googleProvider);
+    await signInWithRedirect(auth, googleProvider);
   } catch(e) {
-    console.error('signInWithPopup error:', e.code, e.message);
-    // Popup заблокирован — fallback на redirect
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-      } catch(e2) {
-        document.getElementById('home-err').textContent = `Ошибка: ${e2.code || e2.message}`;
-      }
-    } else {
-      document.getElementById('home-err').textContent = `Ошибка: ${e.code || e.message}`;
-    }
+    console.error('signInWithRedirect error:', e.code, e.message);
+    document.getElementById('home-err').textContent = `Ошибка: ${e.code || e.message}`;
   }
 };
 
-// Обрабатываем возврат после редиректа (fallback)
+// Обрабатываем возврат после редиректа
 getRedirectResult(auth).then(result => {
   if (result?.user) console.log('Redirect login success:', result.user.email);
 }).catch(e => {
@@ -553,7 +544,11 @@ function handleState(d) {
       renderWait(players, d.readyForAnswers||[], 'wait-answers-list');
       show('s-wait-answers');
     } else {
-      setupAnswerScreen(d);
+      // Не перерисовывать если экран ответов уже активен — иначе стираются введённые ответы
+      const answerScreenActive = document.getElementById('s-answer').classList.contains('active');
+      if (!answerScreenActive) {
+        setupAnswerScreen(d);
+      }
       show('s-answer');
     }
     return;
