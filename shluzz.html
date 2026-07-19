@@ -353,11 +353,14 @@ window.signInGoogle = async () => {
 
 // Обрабатываем возврат после редиректа
 getRedirectResult(auth).then(result => {
-  if (result?.user) console.log('Redirect login success:', result.user.email);
+  if (result?.user) {
+    console.log('Redirect login success:', result.user.email);
+  }
 }).catch(e => {
   console.error('getRedirectResult error:', e.code, e.message);
-  if (e.code && e.code !== 'auth/no-current-user') {
-    document.getElementById('home-err').textContent = `Ошибка входа: ${e.code}`;
+  const errEl = document.getElementById('home-err');
+  if (errEl && e.code && e.code !== 'auth/no-current-user') {
+    errEl.textContent = `Ошибка входа: ${e.code}`;
   }
 });
 
